@@ -1014,6 +1014,7 @@ h1, h2, h3, .display { font-family: 'Bebas Neue', cursive; letter-spacing: 0.05e
         <button class="btn btn-primary" onclick="generateTournament()">▶ Generate Tournament</button>
         <button class="btn btn-secondary btn-sm" onclick="fillDummyScores()">🎲 Fill Dummy Scores</button>
         <button class="btn btn-secondary btn-sm" onclick="resetAll()">Reset All</button>
+        <button class="btn btn-secondary btn-sm" onclick="showScoringExplainer()">📖 Scores Explained</button>
       </div>
       <div id="setup-alert" class="alert" style="display:none;margin-top:1rem"></div>
     </div>
@@ -3575,6 +3576,242 @@ function resetAll(){
 
 // ===================== START =====================
 init();
+</script>
+
+<!-- ===== SCORING EXPLAINER MODAL ===== -->
+<div id="scoring-explainer-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:300;align-items:center;justify-content:center;padding:1rem;overflow-y:auto" onclick="if(event.target===this)closeScoringExplainer()">
+  <div id="scoring-explainer-modal" style="background:var(--slate);border:1px solid var(--border);border-radius:16px;max-width:860px;width:100%;position:relative;max-height:90vh;overflow-y:auto">
+    <button onclick="closeScoringExplainer()" style="position:sticky;top:1rem;right:1rem;float:right;background:rgba(255,255,255,0.1);border:none;color:var(--text);font-size:1.2rem;width:2rem;height:2rem;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;margin:1rem 1rem 0 0;z-index:1">✕</button>
+    <div id="scoring-explainer-content" style="padding:2rem;clear:both"></div>
+  </div>
+</div>
+
+<script>
+function closeScoringExplainer() {
+  document.getElementById('scoring-explainer-overlay').style.display='none';
+}
+
+function showScoringExplainer() {
+  const {max:pot, base} = effectivePot();
+  const q = numQuestions;
+  const ppq = pointsPerQuestion;
+  const indivMax = q * ppq;
+  const teamMax = indivMax * 2;
+  const overrideActive = numQuestionsOverride != null;
+
+  // Helper: render a single scenario card
+  const scenario = (title, subtitle, teamA, teamB, note) => {
+    const sA = teamA.total, sB = teamB.total;
+    const forcedDraw = teamA.forced || teamB.forced;
+    let tpA, tpB, resultLabel, resultColour;
+    if(forcedDraw) {
+      tpA = tpB = base;
+      resultLabel = 'Forced Draw'; resultColour = 'var(--accent)';
+    } else {
+      tpA = Math.min(Math.max(base + (sA - sB), 0), pot);
+      tpB = pot - tpA;
+      if(sA > sB){ resultLabel='Team A Wins'; resultColour='var(--win)'; }
+      else if(sB > sA){ resultLabel='Team B Wins'; resultColour='var(--win)'; }
+      else { resultLabel='Draw'; resultColour='var(--accent)'; }
+    }
+
+    const diff = forcedDraw ? '—' : (sA - sB > 0 ? `+${sA-sB}` : sA === sB ? '0' : `${sA-sB}`);
+    const playerRow = (name, score, isGhost, isOut) => {
+      const badge = isGhost
+        ? `<span style="background:rgba(138,135,176,0.15);border:1px dashed rgba(138,135,176,0.4);border-radius:6px;padding:0.2rem 0.5rem;color:var(--muted);font-size:0.8rem">👻 0</span>`
+        : isOut
+        ? `<span style="background:rgba(192,57,43,0.12);border:1px dashed rgba(192,57,43,0.4);border-radius:6px;padding:0.2rem 0.5rem;color:var(--lose);font-size:0.8rem">OUT — 0</span>`
+        : `<span style="font-family:'Bebas Neue',cursive;font-size:1.1rem;color:var(--accent)">${score}</span>`;
+      return `<div style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.05);border-radius:6px;padding:0.4rem 0.75rem;margin-bottom:0.3rem">
+        <span style="font-weight:600;font-size:0.9rem">${name}</span>${badge}</div>`;
+    };
+
+    const teamBlock = (team, tp, isWin, showX2) => `
+      <div style="flex:1;min-width:0">
+        <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:0.4rem;font-weight:600">${team.label}</div>
+        ${team.players.map(p => playerRow(p.name, p.score, p.ghost, p.out)).join('')}
+        <div style="display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding-top:0.4rem;margin-top:0.3rem">
+          <span style="font-size:0.7rem;text-transform:uppercase;color:var(--muted)">Total${showX2?' ×2':''}</span>
+          <span style="font-family:'Bebas Neue',cursive;font-size:1rem;color:${isWin&&!forcedDraw?'var(--win)':!isWin&&sA!==sB&&!forcedDraw?'var(--lose)':'var(--text)'}">${forcedDraw?'—':team.total}</span>
+        </div>
+        <div style="font-family:'Bebas Neue',cursive;font-size:1.6rem;color:${forcedDraw?'var(--accent)':isWin?'var(--win)':sA===sB?'var(--accent)':'var(--lose)'};text-align:right;line-height:1.1;margin-top:0.2rem">${tp} <span style="font-size:0.7rem">PTS</span></div>
+      </div>`;
+
+    const showX2A = teamA.players.some(p=>p.ghost||p.out) && !teamA.players.every(p=>p.ghost||p.out);
+    const showX2B = teamB.players.some(p=>p.ghost||p.out) && !teamB.players.every(p=>p.ghost||p.out);
+
+    return `
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1.5rem">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:0.2rem">
+        <h3 style="font-family:'Bebas Neue',cursive;font-size:1.2rem;color:var(--accent);letter-spacing:0.05em;margin:0">${title}</h3>
+        <span style="font-family:'Bebas Neue',cursive;font-size:1rem;color:${resultColour};letter-spacing:0.05em">${resultLabel}</span>
+      </div>
+      ${subtitle?`<p style="color:var(--muted);font-size:0.8rem;margin-bottom:0.75rem">${subtitle}</p>`:''}
+      <div style="display:flex;align-items:flex-start;gap:1rem;flex-wrap:wrap">
+        ${teamBlock(teamA, tpA, sA>sB, showX2A)}
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 0.25rem;align-self:center;gap:0.2rem">
+          <span style="font-family:'Bebas Neue',cursive;color:var(--muted);font-size:1rem">VS</span>
+          ${!forcedDraw?`<span style="font-size:0.75rem;color:var(--muted)">diff: ${diff}</span>`:''}
+        </div>
+        ${teamBlock(teamB, tpB, sB>sA, showX2B)}
+      </div>
+      ${note?`<div style="margin-top:0.75rem;padding:0.5rem 0.75rem;background:rgba(0,212,255,0.06);border-left:3px solid var(--accent);border-radius:4px;font-size:0.8rem;color:var(--muted)">${note}</div>`:''}
+    </div>`;
+  };
+
+  // Build team helpers
+  const mkP = (name, score, ghost=false, out=false) => ({name, score: ghost||out ? 0 : score, ghost, out});
+  const mkTeam = (label, p1, p2, forced=false) => {
+    const ab1 = p1.ghost||p1.out, ab2 = p2.ghost||p2.out;
+    const s1 = ab1 ? 0 : p1.score, s2 = ab2 ? 0 : p2.score;
+    let total;
+    if(ab1 && ab2) total = 0;
+    else if(ab1) total = s2 * 2;
+    else if(ab2) total = s1 * 2;
+    else total = s1 + s2;
+    return {label, players:[p1,p2], total, forced};
+  };
+
+  // Pick realistic scores based on indivMax
+  const hi = indivMax, mid = Math.round(indivMax * 0.7), lo = Math.round(indivMax * 0.3), half = Math.round(indivMax * 0.5);
+
+  // Scenario 1: Clear win
+  const s1a = mkTeam('Team A', mkP('Player A1', hi), mkP('Player A2', mid));
+  const s1b = mkTeam('Team B', mkP('Player B1', lo), mkP('Player B2', lo));
+
+  // Scenario 2: Close win
+  const s2Close = Math.ceil(indivMax * 0.55);
+  const s2a = mkTeam('Team A', mkP('Player A1', s2Close), mkP('Player A2', half));
+  const s2b = mkTeam('Team B', mkP('Player B1', half), mkP('Player B2', half-1));
+
+  // Scenario 3: Draw
+  const s3a = mkTeam('Team A', mkP('Player A1', half), mkP('Player A2', half));
+  const s3b = mkTeam('Team B', mkP('Player B1', half), mkP('Player B2', half));
+
+  // Scenario 4: Maximum margin (Team A max, Team B zero) — clamping
+  const s4a = mkTeam('Team A', mkP('Player A1', hi), mkP('Player A2', hi));
+  const s4b = mkTeam('Team B', mkP('Player B1', 0), mkP('Player B2', 0));
+
+  // Scenario 5: Ghost partner
+  const s5a = mkTeam('Team A', mkP('Player A1', mid), mkP('👻 Ghost', 0, true));
+  const s5b = mkTeam('Team B', mkP('Player B1', half), mkP('Player B2', lo));
+
+  // Scenario 6: Drop out (one player absent)
+  const s6a = mkTeam('Team A', mkP('Player A1', mid), mkP('Player A2 (out)', 0, false, true));
+  const s6a2 = mkTeam('Team A', mkP('Player A1', mid), mkP('Player A2', 0, false, true));
+  s6a2.players[1].out = true;
+  const s6b = mkTeam('Team B', mkP('Player B1', half), mkP('Player B2', half));
+  // Recalculate with correct ×2 logic
+  const s6aFixed = mkTeam('Team A', mkP('Player A1', mid), mkP('Player A2', 0, false, true));
+  s6aFixed.players[1].out=true;
+  s6aFixed.total = mid * 2;
+
+  // Scenario 7: Forced draw — ghost + dropout on same team
+  const s7a = mkTeam('Team A', mkP('👻 Ghost', 0, true), mkP('Player A2 (out)', 0, false, true));
+  s7a.forced=true; s7a.total=0;
+  const s7b = mkTeam('Team B', mkP('Player B1', half), mkP('Player B2', mid));
+
+  // Calc formula note
+  const formulaNote = overrideActive
+    ? `<strong style="color:var(--accent)">Override active</strong> — Pot = ${pot}, Base = ${base}. Formula: winner gets <strong>${base} + difference</strong>, loser gets <strong>${pot} − winner's pts</strong>.`
+    : `<strong>Q=${q}</strong>, <strong>PPQ=${ppq}</strong> → Individual max = ${indivMax} &nbsp;·&nbsp; Team max = ${teamMax} &nbsp;·&nbsp; Pot = ${pot} &nbsp;·&nbsp; Base = ${base}<br>
+       Formula: winner gets <strong>${base} + difference</strong>, loser gets <strong>${pot} − winner's pts</strong>, draw = both get <strong>${base}</strong>.`;
+
+  const html = `
+    <div style="font-family:'Bebas Neue',cursive;font-size:2rem;color:var(--accent);letter-spacing:0.08em;margin-bottom:0.25rem">Scores Explained</div>
+    <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1.5rem">Based on your current settings. All scenarios use dummy player names.</p>
+
+    <div style="background:rgba(0,212,255,0.07);border:1px solid rgba(0,212,255,0.25);border-radius:10px;padding:1rem 1.25rem;margin-bottom:2rem;font-size:0.85rem;line-height:1.8;color:var(--text)">
+      ${formulaNote}
+    </div>
+
+    <h2 style="font-family:'Bebas Neue',cursive;font-size:1.4rem;color:var(--text);letter-spacing:0.06em;margin-bottom:1rem;border-bottom:1px solid var(--border);padding-bottom:0.4rem">Standard Results</h2>
+
+    ${scenario(
+      'Clear Win',
+      `Team A dominate — ${hi} + ${mid} = ${hi+mid} vs ${lo} + ${lo} = ${lo*2}. Difference of ${hi+mid-lo*2}.`,
+      mkTeam('Team A', mkP('Player A1', hi), mkP('Player A2', mid)),
+      mkTeam('Team B', mkP('Player B1', lo), mkP('Player B2', lo)),
+      `Winner's pts = ${base} + ${hi+mid-lo*2} = ${Math.min(base+(hi+mid-lo*2),pot)} &nbsp;·&nbsp; Loser's pts = ${pot} − ${Math.min(base+(hi+mid-lo*2),pot)} = ${pot-Math.min(base+(hi+mid-lo*2),pot)} &nbsp;·&nbsp; Total distributed = ${pot} ✓`
+    )}
+
+    ${scenario(
+      'Close Win',
+      `A narrow victory — every point counts.`,
+      mkTeam('Team A', mkP('Player A1', s2Close), mkP('Player A2', half)),
+      mkTeam('Team B', mkP('Player B1', half), mkP('Player B2', half-1)),
+      `Difference = ${s2Close+half-(half+half-1)} &nbsp;·&nbsp; Winner gets ${base} + ${s2Close+half-(half+half-1)} = ${Math.min(base+(s2Close+half-(half+half-1)),pot)} pts &nbsp;·&nbsp; Loser gets ${pot-Math.min(base+(s2Close+half-(half+half-1)),pot)} pts`
+    )}
+
+    ${scenario(
+      'Draw',
+      `Both teams score identically — each receives the base points.`,
+      mkTeam('Team A', mkP('Player A1', half), mkP('Player A2', half)),
+      mkTeam('Team B', mkP('Player B1', half), mkP('Player B2', half)),
+      `Draw: both teams receive <strong>${base} pts</strong> each. Total distributed = ${pot} ✓`
+    )}
+
+    ${scenario(
+      'Maximum Margin — Score Clamping',
+      `Team A answer everything, Team B score zero. Without clamping, Team B would go negative — so the result is clamped.`,
+      mkTeam('Team A', mkP('Player A1', hi), mkP('Player A2', hi)),
+      mkTeam('Team B', mkP('Player B1', 0), mkP('Player B2', 0)),
+      `Raw winner pts = ${base} + ${hi*2} = ${base+hi*2} — but pot is ${pot}, so clamped to <strong>${pot} pts</strong>. Loser gets <strong>0 pts</strong>. Total distributed = ${pot} ✓`
+    )}
+
+    <h2 style="font-family:'Bebas Neue',cursive;font-size:1.4rem;color:var(--text);letter-spacing:0.06em;margin-bottom:1rem;border-bottom:1px solid var(--border);padding-bottom:0.4rem;margin-top:2rem">Absent Players</h2>
+
+    ${scenario(
+      'Ghost Partner',
+      `Player A1's partner slot is permanently set to Ghost (👻). The Ghost always scores 0 — Player A1's score is doubled to form the team total.`,
+      mkTeam('Team A', mkP('Player A1', mid), mkP('👻 Ghost', 0, true)),
+      mkTeam('Team B', mkP('Player B1', half), mkP('Player B2', lo)),
+      `Player A1 scored ${mid}. Ghost scores 0. Team A total = ${mid} × 2 = ${mid*2}. Normal scoring then applies.`
+    )}
+
+    ${scenario(
+      'Drop Out — One Player Absent',
+      `Player A2 has dropped out for this round. Treated identically to a Ghost for this round only — their partner's score is doubled.`,
+      (() => { const t=mkTeam('Team A', mkP('Player A1', mid), mkP('Player A2', 0, false, true)); t.total=mid*2; return t; })(),
+      mkTeam('Team B', mkP('Player B1', half), mkP('Player B2', lo)),
+      `Player A1 scored ${mid}. Player A2 is OUT. Team A total = ${mid} × 2 = ${mid*2}. Player A2 gets N/P for this round — no pts, no W/L/D counted.`
+    )}
+
+    ${scenario(
+      'Drop Out — Both Players Absent',
+      `Both players on Team A have dropped out. The slot is fully absent — Team B receives full pot.`,
+      (() => { const t=mkTeam('Team A', mkP('Player A1', 0, false, true), mkP('Player A2', 0, false, true)); t.total=0; t.forced=true; return t; })(),
+      mkTeam('Team B', mkP('Player B1', half), mkP('Player B2', lo)),
+      `Both Team A players are OUT → Forced Draw. Both teams receive base points (${base} each), regardless of Team B's score.`
+    )}
+
+    <h2 style="font-family:'Bebas Neue',cursive;font-size:1.4rem;color:var(--text);letter-spacing:0.06em;margin-bottom:1rem;border-bottom:1px solid var(--border);padding-bottom:0.4rem;margin-top:2rem">Forced Draw</h2>
+
+    ${scenario(
+      'Ghost + Drop Out on Same Team',
+      `One slot is the Ghost (👻). Their partner (Player A2) drops out this round. The team has no real players — Forced Draw.`,
+      (() => { const t=mkTeam('Team A', mkP('👻 Ghost', 0, true), mkP('Player A2', 0, false, true)); t.total=0; t.forced=true; return t; })(),
+      mkTeam('Team B', mkP('Player B1', hi), mkP('Player B2', mid)),
+      `Ghost is always absent. Player A2 dropped out. Team A has nobody → Forced Draw. Both teams get <strong>${base} pts</strong> regardless of scores.`
+    )}
+
+    ${overrideActive ? `
+    <h2 style="font-family:'Bebas Neue',cursive;font-size:1.4rem;color:var(--text);letter-spacing:0.06em;margin-bottom:1rem;border-bottom:1px solid var(--border);padding-bottom:0.4rem;margin-top:2rem">Max Score Override Active</h2>
+    <div style="background:rgba(0,212,255,0.07);border:1px solid rgba(0,212,255,0.25);border-radius:10px;padding:1rem 1.25rem;margin-bottom:1.5rem;font-size:0.85rem;color:var(--text)">
+      Override is set to <strong style="color:var(--accent)">${numQuestionsOverride}</strong>. This replaces the Q × PPQ × 4 formula entirely.<br>
+      Pot = <strong>${pot}</strong> &nbsp;·&nbsp; Base = <strong>${base}</strong> &nbsp;·&nbsp; Individual score inputs still accept 0–${indivMax}.<br>
+      All scenarios above use these override values.
+    </div>` : ''}
+
+    <div style="text-align:center;margin-top:1.5rem">
+      <button class="btn btn-primary" onclick="closeScoringExplainer()">Got it!</button>
+    </div>`;
+
+  document.getElementById('scoring-explainer-content').innerHTML = html;
+  const overlay = document.getElementById('scoring-explainer-overlay');
+  overlay.style.display = 'flex';
+  overlay.scrollTop = 0;
+}
 </script>
 </body>
 </html>
