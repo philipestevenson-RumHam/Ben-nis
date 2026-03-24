@@ -6,6 +6,7 @@
 <title>Americano — Smartphone Quiz Knights</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 :root {
   --court: #2d7a3a;
@@ -979,19 +980,25 @@ h1, h2, h3, .display { font-family: 'Bebas Neue', cursive; letter-spacing: 0.05e
       <div style="margin:1rem 0;">
         <div style="display:flex;align-items:flex-start;gap:2rem;flex-wrap:wrap;margin-bottom:0.6rem">
           <div>
+            <label style="font-size:0.8rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);font-weight:600;display:block;margin-bottom:0.5rem">Questions per player per set</label>
+            <input type="number" id="num-questions" min="1" max="100" value="10"
+              oninput="updateQuestionInfo()"
+              style="width:80px;text-align:center;background:rgba(255,255,255,0.07);border:1px solid var(--border);border-radius:8px;padding:0.5rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:1.1rem;font-weight:600;outline:none;">
+          </div>
+          <div>
+            <label style="font-size:0.8rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);font-weight:600;display:block;margin-bottom:0.5rem">Points per question</label>
+            <input type="number" id="num-ppq" min="1" max="100" value="1"
+              oninput="updateQuestionInfo()"
+              style="width:80px;text-align:center;background:rgba(255,255,255,0.07);border:1px solid var(--border);border-radius:8px;padding:0.5rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:1.1rem;font-weight:600;outline:none;">
+          </div>
+          <div>
             <label style="font-size:0.8rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);font-weight:600;display:block;margin-bottom:0.5rem">Max Score Override</label>
             <div style="display:flex;align-items:center;gap:0.5rem">
               <input type="number" id="num-questions-override" min="1" max="999" placeholder="—"
                 oninput="updateOverride()"
                 style="width:80px;text-align:center;background:rgba(255,255,255,0.07);border:1px solid var(--border);border-radius:8px;padding:0.5rem;color:var(--accent);font-family:'DM Sans',sans-serif;font-size:1.1rem;font-weight:600;outline:none;">
-              <span style="font-size:0.8rem;color:var(--muted);line-height:1.4">If set, replaces<br>Questions Per Set<br>for pts calculation</span>
+              <span style="font-size:0.8rem;color:var(--muted);line-height:1.4">If set, replaces<br>Q × PPQ<br>for pts calculation</span>
             </div>
-          </div>
-          <div>
-            <label style="font-size:0.8rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);font-weight:600;display:block;margin-bottom:0.5rem">Questions per player per set</label>
-            <input type="number" id="num-questions" min="1" max="100" value="10"
-              oninput="updateQuestionInfo()"
-              style="width:80px;text-align:center;background:rgba(255,255,255,0.07);border:1px solid var(--border);border-radius:8px;padding:0.5rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:1.1rem;font-weight:600;outline:none;">
           </div>
         </div>
         <div id="question-info" style="font-size:0.85rem;color:var(--muted);line-height:1.7"></div>
@@ -1021,10 +1028,14 @@ h1, h2, h3, .display { font-family: 'Bebas Neue', cursive; letter-spacing: 0.05e
       <p style="color:var(--muted);margin-top:0.25rem" id="play-subtitle">Select a round to begin</p>
     </div>
     <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
+      <button class="btn btn-secondary btn-sm" onclick="exportFixtures()">⬇ Export Fixtures</button>
+      <label class="btn btn-secondary btn-sm" style="cursor:pointer;margin:0">⬆ Import Fixtures<input type="file" accept=".xlsx" style="display:none" onchange="importFixtures(this)"></label>
+      <button class="btn btn-secondary btn-sm" onclick="downloadRoundImage(currentRound)">📸 Save Round</button>
       <button class="btn btn-secondary btn-sm" onclick="handleObsClick(event, currentRound)">📺 OBS <span style="font-size:0.6rem;opacity:0.45;letter-spacing:0.03em">↗</span></button>
     </div>
   </div>
 
+  <div id="play-alert" class="alert" style="display:none;margin-bottom:1rem"></div>
   <div class="round-bar" id="round-bar"></div>
   <div id="play-content"></div>
 </div>
@@ -1185,6 +1196,7 @@ let currentRound = 0;
 let obsRound = 0; // round currently shown in OBS overlay
 let tournamentGenerated = false;
 let numQuestions = 10;
+let pointsPerQuestion = 1; // multiplier: each correct answer = this many points
 let numQuestionsOverride = null; // if set, used instead of numQuestions for pts calculation
 
 // ===================== INIT =====================
@@ -1205,13 +1217,16 @@ function updateOverride() {
 
 function updateQuestionInfo() {
   const n = parseInt(document.getElementById('num-questions').value) || 10;
+  const ppq = parseInt(document.getElementById('num-ppq').value) || 1;
   numQuestions = n;
+  pointsPerQuestion = ppq;
   const { max, base } = effectivePot();
   const overrideActive = numQuestionsOverride != null;
+  const indivMax = n * ppq;
   document.getElementById('question-info').innerHTML =
     (overrideActive ? `<span style="color:var(--accent);font-weight:600">Override active: pot = ${max}, base = ${base}</span><br>` : '') +
-    `Max individual score: <strong style="color:var(--text)">${n}</strong> &nbsp;·&nbsp; ` +
-    `Max team score: <strong style="color:var(--text)">${n*2}</strong> &nbsp;·&nbsp; ` +
+    `Max individual score: <strong style="color:var(--text)">${indivMax}</strong> &nbsp;·&nbsp; ` +
+    `Max team score: <strong style="color:var(--text)">${indivMax*2}</strong> &nbsp;·&nbsp; ` +
     `Total pts pot per set: <strong style="color:var(--text)">${max}</strong><br>` +
     `Winning team scores: <strong style="color:var(--win)">${base} + difference</strong> &nbsp;·&nbsp; ` +
     `Losing team: <strong style="color:var(--lose)">${base} − difference</strong> &nbsp;·&nbsp; ` +
@@ -1756,15 +1771,16 @@ function setExtraScore(r, c, key, extraSlotIdx, val) {
 //   Winner gets their team score + opponent's team score (i.e. full pot) capped, loser gets remainder
 //   More precisely: winnerPts = clamp(base + diff, 0, max), loserPts = max - winnerPts
 //   Where base = effectiveQ*2, diff = winnerScore - loserScore, max = effectiveQ*4
-//   effectiveQ = numQuestionsOverride if set, else numQuestions
+//   effectiveQ = numQuestionsOverride if set, else numQuestions × pointsPerQuestion
 function effectivePot() {
   // Returns {max, base} for pts calculation.
   // If override is set: override IS the total pot, base = pot/2.
-  // Otherwise: pot = numQuestions * 4, base = numQuestions * 2.
+  // Otherwise: pot = numQuestions * pointsPerQuestion * 4, base = numQuestions * pointsPerQuestion * 2.
   if (numQuestionsOverride != null && numQuestionsOverride > 0) {
     return { max: numQuestionsOverride, base: numQuestionsOverride / 2 };
   }
-  return { max: numQuestions * 4, base: numQuestions * 2 };
+  const indivMax = numQuestions * pointsPerQuestion;
+  return { max: indivMax * 4, base: indivMax * 2 };
 }
 
 function calcTournamentPts(teamScore, oppScore) {
@@ -1785,199 +1801,187 @@ function calcBothPts(sA, sB) {
 // ===================== LEADERBOARD =====================
 let currentLbTab = 1;
 
-function exportLbImage(tab) {
+// ── Shared leaderboard canvas builder ───────────────────────────────────
+function buildLeaderboardCanvas(tab, logoImg) {
   const isLB1 = tab === 1;
   const tbody = document.getElementById(isLB1 ? 'lb1-body' : 'lb2-body');
-  const thead = tbody.closest('table').querySelector('thead');
-  if(!tbody||!thead) return;
-
+  const thead = tbody ? tbody.closest('table').querySelector('thead') : null;
+  if(!tbody||!thead) return null;
   const rows = Array.from(tbody.querySelectorAll('tr'));
-  if(!rows.length){alert('No leaderboard data yet.');return;}
+  if(!rows.length) return null;
 
   const headerCells = Array.from(thead.querySelectorAll('th')).map(th=>th.textContent.trim());
   const dataRows = rows.map(tr=>Array.from(tr.querySelectorAll('td')).map(td=>td.textContent.trim()));
 
-  const SCALE = 2;
-  const MARGIN = 28;
-  const ROW_H = 48;
-  const HEADER_H = 52;
-  const TITLE_H = 72;
-  const FOOTER_H = 40;
-  const cols = headerCells.length;
-  const nameColW = 280;
-  const otherColW = 60;
-  const totalW = 52 + nameColW + (cols-2)*otherColW + MARGIN*2;
-  const totalH = TITLE_H + HEADER_H + dataRows.length*ROW_H + FOOTER_H + MARGIN*2;
+  const SCALE=2, MARGIN=28, ROW_H=48, HEADER_H=52, TITLE_H=72, FOOTER_H=40;
+  const cols=headerCells.length, nameColW=280, otherColW=60;
+  const totalW = 52+nameColW+(cols-2)*otherColW+MARGIN*2;
+  const totalH = TITLE_H+HEADER_H+dataRows.length*ROW_H+FOOTER_H+MARGIN*2;
 
   const c = document.createElement('canvas');
-  c.width = totalW * SCALE;
-  c.height = totalH * SCALE;
-  const ctx = c.getContext('2d');
-  ctx.scale(SCALE, SCALE);
+  c.width=totalW*SCALE; c.height=totalH*SCALE;
+  const ctx=c.getContext('2d');
+  ctx.scale(SCALE,SCALE);
 
-  // Extract the logo base64 src from the embedded stylesheet
-  let logoSrc = null;
-  for(const sheet of document.styleSheets){
-    try{
-      for(const rule of sheet.cssRules){
-        if(rule.selectorText && rule.selectorText.includes('body::before')){
-          const m = rule.style.backgroundImage.match(/url\("?(data:[^"')]+)"?\)/);
-          if(m) logoSrc = m[1];
-        }
-      }
-    }catch(e){}
+  // Background
+  const bg=ctx.createLinearGradient(0,0,totalW,totalH);
+  bg.addColorStop(0,'#12062a'); bg.addColorStop(1,'#1c0f3a');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,totalW,totalH);
+  const g1=ctx.createRadialGradient(0,0,0,0,0,totalW*0.7);
+  g1.addColorStop(0,'rgba(0,212,255,0.08)'); g1.addColorStop(1,'rgba(0,212,255,0)');
+  ctx.fillStyle=g1; ctx.fillRect(0,0,totalW,totalH);
+  const g2=ctx.createRadialGradient(totalW,totalH,0,totalW,totalH,totalW*0.7);
+  g2.addColorStop(0,'rgba(124,58,237,0.12)'); g2.addColorStop(1,'rgba(124,58,237,0)');
+  ctx.fillStyle=g2; ctx.fillRect(0,0,totalW,totalH);
+
+  // Tiled logo
+  if(logoImg){
+    const tW=180, tH=Math.round(180*logoImg.naturalHeight/logoImg.naturalWidth)||180;
+    ctx.globalAlpha=0.04;
+    for(let ty=0;ty<totalH;ty+=tH) for(let tx=0;tx<totalW;tx+=tW) ctx.drawImage(logoImg,tx,ty,tW,tH);
+    ctx.globalAlpha=1.0;
   }
-  // Fallback: parse from raw style tag text
-  if(!logoSrc){
-    const styleText = Array.from(document.querySelectorAll('style')).map(s=>s.textContent).join('');
-    const m = styleText.match(/body::before[^{]*{[^}]*background-image:\s*url\('([^']+)'\)/);
-    if(m) logoSrc = m[1];
-  }
 
-  function drawCanvas(logoImg) {
-    // Background gradient
-    const bg = ctx.createLinearGradient(0, 0, totalW, totalH);
-    bg.addColorStop(0, '#12062a');
-    bg.addColorStop(1, '#1c0f3a');
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, totalW, totalH);
+  // Accent bars
+  const bar=ctx.createLinearGradient(0,0,totalW,0);
+  bar.addColorStop(0,'#00d4ff'); bar.addColorStop(0.5,'#7c3aed'); bar.addColorStop(1,'#5b21b6');
+  ctx.fillStyle=bar; ctx.fillRect(0,0,totalW,4);
 
-    // Radial glows like the page
-    const g1 = ctx.createRadialGradient(0, 0, 0, 0, 0, totalW*0.7);
-    g1.addColorStop(0, 'rgba(0,212,255,0.08)');
-    g1.addColorStop(1, 'rgba(0,212,255,0)');
-    ctx.fillStyle = g1;
-    ctx.fillRect(0, 0, totalW, totalH);
-    const g2 = ctx.createRadialGradient(totalW, totalH, 0, totalW, totalH, totalW*0.7);
-    g2.addColorStop(0, 'rgba(124,58,237,0.12)');
-    g2.addColorStop(1, 'rgba(124,58,237,0)');
-    ctx.fillStyle = g2;
-    ctx.fillRect(0, 0, totalW, totalH);
+  let y=MARGIN;
+  ctx.font=`bold 28px Arial`; ctx.fillStyle='#ffffff'; ctx.textAlign='center';
+  ctx.fillText('AMERICANO',totalW/2,y+30);
+  ctx.font=`16px Arial`; ctx.fillStyle='#8a87b0';
+  ctx.fillText(isLB1?'Main Standings':'Individual Stats',totalW/2,y+52);
+  y+=TITLE_H;
 
-    // Tiled logo at 4% opacity
-    if(logoImg){
-      const tileW = 180, tileH = Math.round(180 * logoImg.naturalHeight / logoImg.naturalWidth);
-      ctx.globalAlpha = 0.04;
-      for(let ty=0; ty<totalH; ty+=tileH){
-        for(let tx=0; tx<totalW; tx+=tileW){
-          ctx.drawImage(logoImg, tx, ty, tileW, tileH);
-        }
+  const colXs=[MARGIN, MARGIN+52];
+  for(let i=2;i<cols;i++) colXs.push(MARGIN+52+nameColW+(i-2)*otherColW);
+  const colWidths=[52,nameColW,...Array(cols-2).fill(otherColW)];
+
+  // Header
+  const hdrGrad=ctx.createLinearGradient(0,y,0,y+HEADER_H);
+  hdrGrad.addColorStop(0,'#2a1050'); hdrGrad.addColorStop(1,'#1c0f3a');
+  ctx.fillStyle=hdrGrad; ctx.fillRect(MARGIN,y,totalW-MARGIN*2,HEADER_H);
+  ctx.strokeStyle='rgba(124,58,237,0.5)'; ctx.lineWidth=1;
+  ctx.strokeRect(MARGIN+0.5,y+0.5,totalW-MARGIN*2-1,HEADER_H-1);
+  headerCells.forEach((h,i)=>{
+    ctx.font=`bold 13px Arial`; ctx.fillStyle='#00d4ff';
+    ctx.textAlign=i===1?'left':'center';
+    ctx.fillText(h.toUpperCase(), i===1?colXs[i]+8:colXs[i]+colWidths[i]/2, y+HEADER_H/2+5);
+  });
+  y+=HEADER_H;
+
+  // Rows
+  const rankColours=['#e8b43a','#aaaaaa','#cd7f32','#7c7caa'];
+  dataRows.forEach((row,ri)=>{
+    ctx.fillStyle=ri%2===0?'rgba(255,255,255,0.03)':'rgba(255,255,255,0.06)';
+    ctx.fillRect(MARGIN,y,totalW-MARGIN*2,ROW_H);
+    if(ri<dataRows.length-1){
+      ctx.strokeStyle='rgba(255,255,255,0.06)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(MARGIN,y+ROW_H); ctx.lineTo(totalW-MARGIN,y+ROW_H); ctx.stroke();
+    }
+    row.forEach((cell,i)=>{
+      const cx=i===1?colXs[i]+8:colXs[i]+colWidths[i]/2;
+      const cy=y+ROW_H/2+5;
+      ctx.textAlign=i===1?'left':'center';
+      if(i===0){
+        ctx.fillStyle=ri<4?rankColours[ri]:'#4a4a6a';
+        ctx.beginPath();
+        if(ctx.roundRect) ctx.roundRect(colXs[i]+6,y+ROW_H/2-12,40,24,6);
+        else ctx.rect(colXs[i]+6,y+ROW_H/2-12,40,24);
+        ctx.fill();
+        ctx.font=`bold 14px Arial`; ctx.fillStyle='#ffffff'; ctx.textAlign='center';
+        ctx.fillText(cell,colXs[i]+26,cy);
+      } else if(i===1){
+        ctx.font=`600 14px Arial`; ctx.fillStyle='#f0f0ff';
+        ctx.fillText(cell.length>28?cell.slice(0,27)+'…':cell,cx,cy);
+      } else {
+        let colour='#8a87b0';
+        const hdr=headerCells[i].toUpperCase();
+        if(hdr==='W') colour='#27ae60';
+        else if(hdr==='L') colour='#c0392b';
+        else if(hdr==='T.PTS'||hdr==='SCORE') colour='#00d4ff';
+        else if(hdr==='N/P'&&cell!=='—') colour='#c0392b';
+        else if(hdr==='+/-'||hdr==='+/−') colour=cell.startsWith('+')||(!cell.startsWith('-')&&cell!=='0'&&cell!=='')?'#27ae60':'#c0392b';
+        else if(hdr==='%') colour=parseInt(cell)>=50?'#27ae60':'#c0392b';
+        ctx.font=`13px Arial`; ctx.fillStyle=colour;
+        ctx.fillText(cell,cx,cy);
       }
-      ctx.globalAlpha = 1.0;
+    });
+    y+=ROW_H;
+  });
+
+  // Footer
+  y+=8;
+  ctx.strokeStyle='rgba(0,212,255,0.3)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(MARGIN,y); ctx.lineTo(totalW-MARGIN,y); ctx.stroke();
+  y+=14;
+  ctx.font=`12px Arial`; ctx.fillStyle='#8a87b0'; ctx.textAlign='center';
+  ctx.fillText('Smartphone Quiz Knights  ·  Americano Tournament  ·  '+new Date().toLocaleDateString(),totalW/2,y);
+  ctx.fillStyle=bar; ctx.fillRect(0,totalH-4,totalW,4);
+
+  return c;
+}
+
+function exportLbImage(tab) {
+  const tbody = document.getElementById(tab===1?'lb1-body':'lb2-body');
+  if(!tbody||!tbody.querySelectorAll('tr').length){alert('No leaderboard data yet.');return;}
+
+  const logoSrc=getLogoSrc();
+  const doExport=(logoImg)=>{
+    const dateStr=new Date().toISOString().slice(0,10);
+
+    if(typeof JSZip==='undefined'){
+      // No JSZip — just download this tab's image
+      const canvas=buildLeaderboardCanvas(tab,logoImg);
+      if(!canvas) return;
+      const link=document.createElement('a');
+      link.download=`americano_${tab===1?'standings':'individual'}_${dateStr}.png`;
+      link.href=canvas.toDataURL('image/png'); link.click();
+      return;
     }
 
-    // Top gradient bar
-    const bar = ctx.createLinearGradient(0,0,totalW,0);
-    bar.addColorStop(0,'#00d4ff');bar.addColorStop(0.5,'#7c3aed');bar.addColorStop(1,'#5b21b6');
-    ctx.fillStyle=bar;
-    ctx.fillRect(0,0,totalW,4);
+    const zip=new JSZip();
 
-    let y = MARGIN;
+    // Both leaderboard images
+    const c1=buildLeaderboardCanvas(1,logoImg);
+    const c2=buildLeaderboardCanvas(2,logoImg);
+    if(c1) zip.file(`images/americano_standings_${dateStr}.png`, c1.toDataURL('image/png').split(',')[1],{base64:true});
+    if(c2) zip.file(`images/americano_individual_${dateStr}.png`, c2.toDataURL('image/png').split(',')[1],{base64:true});
 
-    // Title
-    ctx.font = `bold 28px Arial, sans-serif`;
-    ctx.fillStyle = '#ffffff';
-    ctx.textAlign = 'center';
-    ctx.fillText('AMERICANO', totalW/2, y+30);
-    ctx.font = `16px Arial, sans-serif`;
-    ctx.fillStyle = '#8a87b0';
-    ctx.fillText(isLB1 ? 'Main Standings' : 'Individual Stats', totalW/2, y+52);
-    y += TITLE_H;
+    // All 15 round images
+    for(let ri=0;ri<15;ri++){
+      const rc=buildRoundCanvas(ri,logoImg);
+      if(rc) zip.file(`images/rounds/americano_round_${ri+1}.png`,rc.toDataURL('image/png').split(',')[1],{base64:true});
+    }
 
-    // Column x positions
-    const colXs = [MARGIN];
-    colXs.push(MARGIN + 52);
-    for(let i=2;i<cols;i++) colXs.push(MARGIN + 52 + nameColW + (i-2)*otherColW);
-    const colWidths = [52, nameColW, ...Array(cols-2).fill(otherColW)];
+    // Excel exports
+    if(tournamentGenerated){
+      try{
+        const fixWb=buildFixturesWorkbook();
+        const fixData=XLSX.write(fixWb,{bookType:'xlsx',type:'binary'});
+        const fixBuf=new Uint8Array(fixData.length);
+        for(let i=0;i<fixData.length;i++) fixBuf[i]=fixData.charCodeAt(i)&0xff;
+        zip.file(`data/americano_fixtures_${dateStr}.xlsx`,fixBuf);
+      }catch(e){}
+      try{
+        const scWb=buildScoresWorkbook();
+        const scData=XLSX.write(scWb,{bookType:'xlsx',type:'binary'});
+        const scBuf=new Uint8Array(scData.length);
+        for(let i=0;i<scData.length;i++) scBuf[i]=scData.charCodeAt(i)&0xff;
+        zip.file(`data/americano_scores_${dateStr}.xlsx`,scBuf);
+      }catch(e){}
+    }
 
-    // Header row
-    const hdrGrad = ctx.createLinearGradient(0,y,0,y+HEADER_H);
-    hdrGrad.addColorStop(0,'#2a1050');hdrGrad.addColorStop(1,'#1c0f3a');
-    ctx.fillStyle=hdrGrad;
-    ctx.fillRect(MARGIN, y, totalW-MARGIN*2, HEADER_H);
-    ctx.strokeStyle='rgba(124,58,237,0.5)';ctx.lineWidth=1;
-    ctx.strokeRect(MARGIN+0.5,y+0.5,totalW-MARGIN*2-1,HEADER_H-1);
-    headerCells.forEach((h,i)=>{
-      ctx.font = `bold 13px Arial`;
-      ctx.fillStyle = '#00d4ff';
-      ctx.textAlign = i===1?'left':'center';
-      const cx = i===1 ? colXs[i]+8 : colXs[i]+colWidths[i]/2;
-      ctx.fillText(h.toUpperCase(), cx, y+HEADER_H/2+5);
+    zip.generateAsync({type:'blob'}).then(blob=>{
+      const a=document.createElement('a');
+      a.download=`americano_pack_${dateStr}.zip`;
+      a.href=URL.createObjectURL(blob); a.click();
     });
-    y += HEADER_H;
+  };
 
-    // Data rows
-    const rankColours = ['#e8b43a','#aaaaaa','#cd7f32','#7c7caa'];
-    dataRows.forEach((row, ri)=>{
-      ctx.fillStyle = ri%2===0 ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.06)';
-      ctx.fillRect(MARGIN, y, totalW-MARGIN*2, ROW_H);
-      if(ri<dataRows.length-1){
-        ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=1;
-        ctx.beginPath();ctx.moveTo(MARGIN,y+ROW_H);ctx.lineTo(totalW-MARGIN,y+ROW_H);ctx.stroke();
-      }
-      row.forEach((cell,i)=>{
-        const cx = i===1 ? colXs[i]+8 : colXs[i]+colWidths[i]/2;
-        const cy = y + ROW_H/2 + 5;
-        ctx.textAlign = i===1?'left':'center';
-        if(i===0){
-          const rc = ri<4?rankColours[ri]:'#4a4a6a';
-          ctx.fillStyle=rc;
-          ctx.beginPath();
-          if(ctx.roundRect){ctx.roundRect(colXs[i]+6,y+ROW_H/2-12,40,24,6);}
-          else{ctx.rect(colXs[i]+6,y+ROW_H/2-12,40,24);}
-          ctx.fill();
-          ctx.font=`bold 14px Arial`;ctx.fillStyle='#ffffff';ctx.textAlign='center';
-          ctx.fillText(cell,colXs[i]+26,cy);
-        } else if(i===1){
-          ctx.font=`600 14px Arial`;ctx.fillStyle='#f0f0ff';
-          ctx.fillText(cell.length>28?cell.slice(0,27)+'…':cell, cx, cy);
-        } else {
-          let colour='#8a87b0';
-          const hdr=headerCells[i].toUpperCase();
-          if(hdr==='W') colour='#27ae60';
-          else if(hdr==='L') colour='#c0392b';
-          else if(hdr==='T.PTS'||hdr==='SCORE') colour='#00d4ff';
-          else if(hdr==='N/P'&&cell!=='—') colour='#c0392b';
-          else if(hdr==='+/-'||hdr==='+/−'){
-            colour=cell.startsWith('+')||(!cell.startsWith('-')&&cell!=='0'&&cell!=='')?'#27ae60':'#c0392b';
-          } else if(hdr==='%'){
-            colour=parseInt(cell)>=50?'#27ae60':'#c0392b';
-          }
-          ctx.font=`13px Arial`;ctx.fillStyle=colour;
-          ctx.fillText(cell,cx,cy);
-        }
-      });
-      y += ROW_H;
-    });
-
-    // Footer
-    y += 8;
-    ctx.strokeStyle='rgba(0,212,255,0.3)';ctx.lineWidth=1;
-    ctx.beginPath();ctx.moveTo(MARGIN,y);ctx.lineTo(totalW-MARGIN,y);ctx.stroke();
-    y += 14;
-    ctx.font=`12px Arial`;ctx.fillStyle='#8a87b0';ctx.textAlign='center';
-    ctx.fillText('Smartphone Quiz Knights  ·  Americano Tournament  ·  '+new Date().toLocaleDateString(), totalW/2, y);
-
-    // Bottom gradient bar
-    ctx.fillStyle=bar;
-    ctx.fillRect(0,totalH-4,totalW,4);
-
-    // Download
-    const link=document.createElement('a');
-    link.download=`americano_${isLB1?'standings':'individual'}_${new Date().toISOString().slice(0,10)}.png`;
-    link.href=c.toDataURL('image/png');
-    link.click();
-  }
-
-  // Load logo then draw, or draw immediately if not found
-  if(logoSrc){
-    const img = new Image();
-    img.onload = () => drawCanvas(img);
-    img.onerror = () => drawCanvas(null);
-    img.src = logoSrc;
-  } else {
-    drawCanvas(null);
-  }
+  if(logoSrc){const img=new Image();img.onload=()=>doExport(img);img.onerror=()=>doExport(null);img.src=logoSrc;}
+  else doExport(null);
 }
 
 function showLbTab(n) {
@@ -2134,13 +2138,14 @@ function updateLeaderboard() {
     return b.draws - a.draws;
   });
 
-  const maxIndiv = numQuestions * numRounds;
+  const maxIndiv = numQuestions * pointsPerQuestion * numRounds;
+  const ppqLabel = pointsPerQuestion > 1 ? ` × ${pointsPerQuestion} pts/q` : '';
   document.getElementById('lb2-desc').textContent =
-    `Ranked by individual questions answered correctly across all sets. Max possible: ${maxIndiv} (${numQuestions} × ${numRounds} sets).`;
+    `Ranked by individual questions answered correctly across all sets. Max possible: ${maxIndiv} (${numQuestions} × ${numRounds} sets${ppqLabel}).`;
 
   document.getElementById('lb2-body').innerHTML = lb2rows.map((s,i) => {
     const rankClass = i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'rank-n';
-    const pct = s.played > 0 ? Math.round(s.indivScore / (numQuestions * numRounds) * 100) : 0;
+    const pct = s.played > 0 ? Math.round(s.indivScore / (numQuestions * pointsPerQuestion * numRounds) * 100) : 0;
     return `<tr>
       <td><span class="rank-badge ${rankClass}">${i+1}</span></td>
       <td style="font-weight:500">${s.name}</td>
@@ -2149,13 +2154,474 @@ function updateLeaderboard() {
       <td style="color:var(--lose)">${s.losses}</td>
       <td style="color:${s.notPlayed>0?'var(--lose)':'var(--muted)'}">${s.notPlayed>0?s.notPlayed:'—'}</td>
       <td style="font-family:'Bebas Neue',cursive;font-size:1.1rem;color:var(--accent)">${s.indivScore}</td>
-      <td style="color:var(--muted)">${numQuestions * numRounds}</td>
+      <td style="color:var(--muted)">${numQuestions * pointsPerQuestion * numRounds}</td>
       <td style="color:${pct>=50?'var(--win)':'var(--lose)'}">${pct}%</td>
     </tr>`;
   }).join('');
 }
 
 // ===================== GRAPHICS =====================
+// ── Shared logo extractor ────────────────────────────────────────────────
+function getLogoSrc() {
+  for(const sheet of document.styleSheets){
+    try{
+      for(const rule of sheet.cssRules){
+        if(rule.selectorText && rule.selectorText.includes('body::before')){
+          const m = rule.style.backgroundImage.match(/url\("?(data:[^"')]+)"?\)/);
+          if(m) return m[1];
+        }
+      }
+    }catch(e){}
+  }
+  const styleText = Array.from(document.querySelectorAll('style')).map(s=>s.textContent).join('');
+  const m = styleText.match(/body::before[^{]*\{[^}]*background-image:\s*url\('([^']+)'\)/);
+  return m ? m[1] : null;
+}
+
+// ── Court round canvas renderer ──────────────────────────────────────────
+function buildRoundCanvas(r, logoImg) {
+  if(!tournamentGenerated||!schedule[r]) return null;
+
+  const SCALE = 2;
+  const W = 1280, H = 720; // 16:9
+  const c = document.createElement('canvas');
+  c.width = W*SCALE; c.height = H*SCALE;
+  const ctx = c.getContext('2d');
+  ctx.scale(SCALE, SCALE);
+
+  // Background
+  const bg = ctx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0,'#12062a'); bg.addColorStop(1,'#1c0f3a');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+  // Radial glows
+  const g1=ctx.createRadialGradient(0,0,0,0,0,W*0.6);
+  g1.addColorStop(0,'rgba(0,212,255,0.08)'); g1.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=g1; ctx.fillRect(0,0,W,H);
+  const g2=ctx.createRadialGradient(W,H,0,W,H,W*0.6);
+  g2.addColorStop(0,'rgba(124,58,237,0.12)'); g2.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=g2; ctx.fillRect(0,0,W,H);
+
+  // Tiled logo at 4% opacity
+  if(logoImg){
+    const tW=180, tH=Math.round(180*logoImg.naturalHeight/logoImg.naturalWidth)||180;
+    ctx.globalAlpha=0.04;
+    for(let ty=0;ty<H;ty+=tH) for(let tx=0;tx<W;tx+=tW) ctx.drawImage(logoImg,tx,ty,tW,tH);
+    ctx.globalAlpha=1;
+  }
+
+  // Top accent bar
+  const bar=ctx.createLinearGradient(0,0,W,0);
+  bar.addColorStop(0,'#00d4ff'); bar.addColorStop(0.5,'#7c3aed'); bar.addColorStop(1,'#5b21b6');
+  ctx.fillStyle=bar; ctx.fillRect(0,0,W,3);
+
+  // Title
+  ctx.font='bold 32px Arial'; ctx.textAlign='center';
+  ctx.fillStyle='#00d4ff'; ctx.fillText('AMERICANO COURTS', W/2, 36);
+  ctx.font='16px Arial'; ctx.fillStyle='#8a87b0';
+  ctx.fillText(`ROUND ${r+1} OF 15`, W/2, 58);
+
+  // 4 court cards in 2×2 grid
+  const PAD=14, TOP=72;
+  const cardW=(W-PAD*3)/2, cardH=(H-TOP-PAD*3)/2;
+
+  for(let ci=0;ci<4;ci++){
+    const col=ci%2, row=Math.floor(ci/2);
+    const cx=PAD+col*(cardW+PAD), cy=TOP+PAD+row*(cardH+PAD);
+    drawCourtCardCanvas(ctx, r, ci, cx, cy, cardW, cardH);
+  }
+
+  // Bottom accent bar
+  ctx.fillStyle=bar; ctx.fillRect(0,H-3,W,3);
+
+  return c;
+}
+
+function drawCourtCardCanvas(ctx, r, ci, cx, cy, cw, ch) {
+  const match=schedule[r][ci];
+  const sc=scores[r]?scores[r][ci]:null;
+  const [piA1,piA2,piB1,piB2]=[match.teamA[0],match.teamA[1],match.teamB[0],match.teamB[1]];
+
+  const exA1=extraForBase(piA1),exA2=extraForBase(piA2),exB1=extraForBase(piB1),exB2=extraForBase(piB2);
+  const exRaw=k=>sc&&sc[k]!==undefined&&sc[k]!==null&&sc[k]!==''?sc[k]:'';
+  const rEA1=exA1!==null?exRaw('ea1'):'',rEA2=exA2!==null?exRaw('ea2'):'';
+  const rEB1=exB1!==null?exRaw('eb1'):'',rEB2=exB2!==null?exRaw('eb2'):'';
+
+  const abA1=isSlotAbsent(piA1,r),abA2=isSlotAbsent(piA2,r);
+  const abB1=isSlotAbsent(piB1,r),abB2=isSlotAbsent(piB2,r);
+  const doA1=dropouts[piA1]&&dropouts[piA1][r],doA2=dropouts[piA2]&&dropouts[piA2][r];
+  const doB1=dropouts[piB1]&&dropouts[piB1][r],doB2=dropouts[piB2]&&dropouts[piB2][r];
+
+  const rawA1=abA1?0:(sc?sc.a1:''),rawA2=abA2?0:(sc?sc.a2:'');
+  const rawB1=abB1?0:(sc?sc.b1:''),rawB2=abB2?0:(sc?sc.b2:'');
+
+  const sA=teamTotal(piA1,piA2,rawA1,rawA2,r,rEA1,rEA2);
+  const sB=teamTotal(piB1,piB2,rawB1,rawB2,r,rEB1,rEB2);
+
+  const slotFill=(pi,raw)=>isSlotAbsent(pi,r)||(raw!==''&&raw!==undefined);
+  const aFilled=slotFill(piA1,rawA1)&&slotFill(piA2,rawA2);
+  const bFilled=slotFill(piB1,rawB1)&&slotFill(piB2,rawB2);
+  const allFilled=aFilled&&bFilled;
+
+  const forcedDraw=allFilled&&((abA1&&abA2)||(abB1&&abB2)||
+    (ghosts[piA1]&&doA2)||(ghosts[piA2]&&doA1)||(ghosts[piB1]&&doB2)||(ghosts[piB2]&&doB1));
+
+  const {max:pot,base}=effectivePot();
+  const {tpA,tpB}=allFilled?(forcedDraw?{tpA:base,tpB:base}:calcBothPts(sA,sB)):{tpA:null,tpB:null};
+  const aWin=allFilled&&!forcedDraw&&sA>sB, bWin=allFilled&&!forcedDraw&&sB>sA;
+
+  // Card background
+  const rr=8;
+  ctx.fillStyle='#1c0f3a';
+  ctx.beginPath(); ctx.roundRect?ctx.roundRect(cx,cy,cw,ch,rr):ctx.rect(cx,cy,cw,ch); ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.1)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.roundRect?ctx.roundRect(cx+0.5,cy+0.5,cw-1,ch-1,rr):ctx.rect(cx+0.5,cy+0.5,cw-1,ch-1); ctx.stroke();
+
+  // Header bar
+  const HDR=28;
+  ctx.fillStyle='#2d7a3a';
+  ctx.beginPath(); ctx.roundRect?ctx.roundRect(cx,cy,cw,HDR,{upperLeft:rr,upperRight:rr,lowerLeft:0,lowerRight:0}):ctx.rect(cx,cy,cw,HDR); ctx.fill();
+  ctx.font='bold 13px Arial'; ctx.fillStyle='#ffffff'; ctx.textAlign='left';
+  ctx.fillText(`Court ${ci+1}`, cx+10, cy+18);
+
+  // Layout: two team columns with VS in middle
+  const BODY_Y=cy+HDR+8;
+  const BODY_H=ch-HDR-8;
+  const VS_W=30;
+  const teamW=(cw-VS_W-16)/2;
+  const tAx=cx+6, tBx=cx+6+teamW+VS_W+4;
+
+  const drawTeam=(tx,label,pi1,pi2,raw1,raw2,rEx1,rEx2,ab1,ab2,do1,do2,total,filled,tp,isWin,showX2)=>{
+    const LROW=18, PR=20, GAP=4;
+    let ty=BODY_Y;
+
+    // Team label
+    ctx.font='600 10px Arial'; ctx.fillStyle='#8a87b0'; ctx.textAlign='left';
+    ctx.fillText(label.toUpperCase(), tx, ty+10);
+    ty+=LROW;
+
+    // Player rows
+    [[pi1,raw1,rEx1,ab1,do1],[pi2,raw2,rEx2,ab2,do2]].forEach(([pi,raw,rawEx,ab,isDo])=>{
+      const name=players[pi];
+      const exIdx=extraForBase(pi);
+      const score=ab?'—':raw===''?'—':getSlotScore(pi,r,raw,rawEx);
+      const eAbsent=exIdx!==null&&isExtraAbsent(exIdx,r);
+      const exName=exIdx!==null&&!eAbsent?extras[exIdx-16].name:'';
+
+      ctx.fillStyle='rgba(255,255,255,0.06)';
+      ctx.fillRect(tx,ty,teamW,PR);
+      ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=0.5;
+      ctx.strokeRect(tx+0.5,ty+0.5,teamW-1,PR-1);
+
+      // Name — truncate to fit leaving room for score
+      const scoreW=24;
+      ctx.font=`${isDo?'italic ':''}11px Arial`;
+      ctx.fillStyle=ab?'#8a87b0':'#f0f0ff';
+      ctx.textAlign='left';
+      let displayName=name+(exName?` +${exName}`:'');
+      // Truncate
+      while(ctx.measureText(displayName).width>teamW-scoreW-10&&displayName.length>3)
+        displayName=displayName.slice(0,-2)+'…';
+      ctx.fillText(displayName, tx+4, ty+PR/2+4);
+
+      // Score
+      ctx.font='bold 13px Arial'; ctx.fillStyle='#00d4ff'; ctx.textAlign='right';
+      ctx.fillText(String(score), tx+teamW-4, ty+PR/2+4);
+
+      ty+=PR+GAP;
+    });
+
+    // Total + PTS
+    ty+=2;
+    ctx.font='9px Arial'; ctx.fillStyle='#8a87b0'; ctx.textAlign='left';
+    ctx.fillText('TOTAL'+(showX2?' ×2':''), tx, ty+9);
+    ctx.font='bold 14px Arial';
+    ctx.fillStyle=isWin?'#27ae60':bWin&&label==='Team A'||aWin&&label==='Team B'?'#c0392b':'#f0f0ff';
+    ctx.textAlign='right';
+    ctx.fillText(filled?String(total):'—', tx+teamW, ty+9);
+    ty+=16;
+    if(tp!==null){
+      const tpColor=isWin?'#27ae60':bWin&&label==='Team A'||aWin&&label==='Team B'?'#c0392b':'#00d4ff';
+      ctx.font='bold 18px Arial'; ctx.fillStyle=tpColor; ctx.textAlign='right';
+      ctx.fillText(`${tp} PTS`, tx+teamW, ty+14);
+    }
+  };
+
+  const showX2A=(abA1||abA2)&&!(abA1&&abA2), showX2B=(abB1||abB2)&&!(abB1&&abB2);
+  drawTeam(tAx,'Team A',piA1,piA2,rawA1,rawA2,rEA1,rEA2,abA1,abA2,doA1,doA2,sA,aFilled,tpA,aWin,showX2A);
+
+  // VS
+  ctx.font='bold 16px Arial'; ctx.fillStyle='#8a87b0'; ctx.textAlign='center';
+  ctx.fillText('VS', cx+cw/2, BODY_Y+BODY_H/2);
+
+  drawTeam(tBx,'Team B',piB1,piB2,rawB1,rawB2,rEB1,rEB2,abB1,abB2,doB1,doB2,sB,bFilled,tpB,bWin,showX2B);
+
+  // Result banner
+  if(allFilled){
+    const BH=22, by=cy+ch-BH;
+    ctx.fillStyle='rgba(28,15,58,0.95)';
+    ctx.fillRect(cx,by,cw,BH);
+    ctx.strokeStyle='rgba(255,255,255,0.1)'; ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.moveTo(cx,by); ctx.lineTo(cx+cw,by); ctx.stroke();
+    const resultText=forcedDraw?'Forced Draw':aWin?'🏆 Team A Wins':bWin?'🏆 Team B Wins':'Draw';
+    const resultColor=forcedDraw||(!aWin&&!bWin)?'#00d4ff':'#27ae60';
+    ctx.font='bold 12px Arial'; ctx.fillStyle=resultColor; ctx.textAlign='center';
+    ctx.fillText(resultText, cx+cw/2, by+15);
+  }
+}
+
+function downloadRoundImage(r) {
+  if(!tournamentGenerated){alert('Generate the tournament first.');return;}
+  const logoSrc=getLogoSrc();
+  const doRender=(img)=>{
+    const canvas=buildRoundCanvas(r,img);
+    if(!canvas) return;
+    const link=document.createElement('a');
+    link.download=`americano_round_${r+1}.png`;
+    link.href=canvas.toDataURL('image/png');
+    link.click();
+  };
+  if(logoSrc){const img=new Image();img.onload=()=>doRender(img);img.onerror=()=>doRender(null);img.src=logoSrc;}
+  else doRender(null);
+}
+
+// ── Export Fixtures ──────────────────────────────────────────────────────
+function buildFixturesWorkbook() {
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1: Settings
+  const wsSettings = XLSX.utils.aoa_to_sheet([
+    ['Setting','Value'],
+    ['Questions Per Set', numQuestions],
+    ['Points Per Question', pointsPerQuestion],
+    ['Max Score Override', numQuestionsOverride||''],
+  ]);
+  wsSettings['!cols'] = [{wch:24},{wch:14}];
+  XLSX.utils.book_append_sheet(wb, wsSettings, 'Settings');
+
+  // Sheet 2: Players
+  const playersData = [['Slot','Name','Ghost','Extra Name','Pairs With (slot #)']];
+  players.forEach((p,i)=>{
+    const exIdx = extraForBase(i);
+    const ex = exIdx!==null ? extras[exIdx-16] : null;
+    playersData.push([i+1, p, ghosts[i]?'YES':'', ex?ex.name:'', ex?ex.baseIndex+1:'']);
+  });
+  const wsPlayers = XLSX.utils.aoa_to_sheet(playersData);
+  wsPlayers['!cols'] = [{wch:6},{wch:28},{wch:6},{wch:24},{wch:16}];
+  XLSX.utils.book_append_sheet(wb, wsPlayers, 'Players');
+
+  // Sheet 3: Drop Outs
+  const doHeader = ['Player','Name',...Array.from({length:15},(_,r)=>`Round ${r+1}`)];
+  const doData = [doHeader];
+  for(let pi=0;pi<16;pi++){
+    const row = [pi+1, players[pi]];
+    for(let r=0;r<15;r++) row.push(dropouts[pi]&&dropouts[pi][r]?1:0);
+    doData.push(row);
+  }
+  extras.forEach((ex,ei)=>{
+    if(!ex||!ex.name||ex.baseIndex===null) return;
+    const idx=16+ei, row=[`E${ei+1}`, ex.name];
+    for(let r=0;r<15;r++) row.push(dropouts[idx]&&dropouts[idx][r]?1:0);
+    doData.push(row);
+  });
+  const wsDo = XLSX.utils.aoa_to_sheet(doData);
+  wsDo['!cols'] = [{wch:6},{wch:28},...Array(15).fill({wch:8})];
+  XLSX.utils.book_append_sheet(wb, wsDo, 'Drop Outs');
+
+  // Sheet 4: Fixtures
+  const fixData = [['Round','Court','Team A P1','Team A P2','Team B P1','Team B P2']];
+  for(let r=0;r<15;r++){
+    if(!schedule[r]) continue;
+    for(let c=0;c<4;c++){
+      const m=schedule[r][c];
+      fixData.push([r+1,c+1,players[m.teamA[0]],players[m.teamA[1]],players[m.teamB[0]],players[m.teamB[1]]]);
+    }
+  }
+  const wsFix = XLSX.utils.aoa_to_sheet(fixData);
+  wsFix['!cols'] = [{wch:6},{wch:6},{wch:26},{wch:26},{wch:26},{wch:26}];
+  XLSX.utils.book_append_sheet(wb, wsFix, 'Fixtures');
+
+  // Sheet 5: Scores (with calculated reference columns — not used on import)
+  const scHeader = ['Round','Court','Team A P1','A1 Score','Team A P2','A2 Score',
+    'Extra A1 Name','EA1 Score','Extra A2 Name','EA2 Score',
+    'Team B P1','B1 Score','Team B P2','B2 Score',
+    'Extra B1 Name','EB1 Score','Extra B2 Name','EB2 Score',
+    '── CALCULATED ──','Team A Total','Team B Total','Team A Pts','Team B Pts','Result'];
+  const scData = [scHeader];
+  for(let r=0;r<15;r++){
+    if(!schedule[r]) continue;
+    for(let c=0;c<4;c++){
+      const m=schedule[r][c];
+      const sc=scores[r]?scores[r][c]:{};
+      const [piA1,piA2,piB1,piB2]=[m.teamA[0],m.teamA[1],m.teamB[0],m.teamB[1]];
+      const exA1=extraForBase(piA1),exA2=extraForBase(piA2),exB1=extraForBase(piB1),exB2=extraForBase(piB2);
+      const sv=v=>v!==undefined&&v!==''?v:'';
+      const exRaw=k=>sc&&sc[k]!==undefined&&sc[k]!==null&&sc[k]!==''?sc[k]:'';
+      const rEA1=exA1!==null?exRaw('ea1'):'', rEA2=exA2!==null?exRaw('ea2'):'';
+      const rEB1=exB1!==null?exRaw('eb1'):'', rEB2=exB2!==null?exRaw('eb2'):'';
+      const abA1=isSlotAbsent(piA1,r),abA2=isSlotAbsent(piA2,r);
+      const abB1=isSlotAbsent(piB1,r),abB2=isSlotAbsent(piB2,r);
+      const rawA1=abA1?0:sv(sc.a1), rawA2=abA2?0:sv(sc.a2);
+      const rawB1=abB1?0:sv(sc.b1), rawB2=abB2?0:sv(sc.b2);
+      // Only calculate if both teams have all scores filled
+      const aFilled=(abA1||(rawA1!==''&&rawA1!==undefined))&&(abA2||(rawA2!==''&&rawA2!==undefined));
+      const bFilled=(abB1||(rawB1!==''&&rawB1!==undefined))&&(abB2||(rawB2!==''&&rawB2!==undefined));
+      const allFilled=aFilled&&bFilled;
+      const doA1=dropouts[piA1]&&dropouts[piA1][r], doA2=dropouts[piA2]&&dropouts[piA2][r];
+      const doB1=dropouts[piB1]&&dropouts[piB1][r], doB2=dropouts[piB2]&&dropouts[piB2][r];
+      const forcedDraw=allFilled&&((abA1&&abA2)||(abB1&&abB2)||
+        (ghosts[piA1]&&doA2)||(ghosts[piA2]&&doA1)||(ghosts[piB1]&&doB2)||(ghosts[piB2]&&doB1));
+      let sA='', sB='', tpA='', tpB='', result='';
+      if(allFilled){
+        sA=teamTotal(piA1,piA2,rawA1,rawA2,r,rEA1,rEA2);
+        sB=teamTotal(piB1,piB2,rawB1,rawB2,r,rEB1,rEB2);
+        const pts=forcedDraw?{tpA:effectivePot().base,tpB:effectivePot().base}:calcBothPts(sA,sB);
+        tpA=pts.tpA; tpB=pts.tpB;
+        result=forcedDraw?'Forced Draw':sA>sB?'Team A Win':sB>sA?'Team B Win':'Draw';
+      }
+      scData.push([r+1,c+1,
+        players[piA1],sv(sc.a1),players[piA2],sv(sc.a2),
+        exA1!==null?extras[exA1-16].name:'',exA1!==null?sv(sc.ea1):'',
+        exA2!==null?extras[exA2-16].name:'',exA2!==null?sv(sc.ea2):'',
+        players[piB1],sv(sc.b1),players[piB2],sv(sc.b2),
+        exB1!==null?extras[exB1-16].name:'',exB1!==null?sv(sc.eb1):'',
+        exB2!==null?extras[exB2-16].name:'',exB2!==null?sv(sc.eb2):'',
+        '────',sA,sB,tpA,tpB,result,
+      ]);
+    }
+  }
+  const wsSc = XLSX.utils.aoa_to_sheet(scData);
+  wsSc['!cols'] = [{wch:6},{wch:6},...Array(16).fill({wch:16}),{wch:14},{wch:12},{wch:12},{wch:12},{wch:12},{wch:14}];
+  XLSX.utils.book_append_sheet(wb, wsSc, 'Scores');
+
+  return wb;
+}
+
+function exportFixtures() {
+  if(!tournamentGenerated){alert('Generate the tournament first.');return;}
+  XLSX.writeFile(buildFixturesWorkbook(), 'americano_fixtures.xlsx');
+}
+
+// ── Import Fixtures ──────────────────────────────────────────────────────
+function importFixtures(input) {
+  if(!input.files||!input.files[0]) return;
+  const file = input.files[0];
+  input.value='';
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const wb = XLSX.read(e.target.result, {type:'binary'});
+      let imported = {settings:0, players:0, dropouts:0, scores:0};
+
+      // ── Settings sheet ─────────────────────────────────────────────────
+      if(wb.SheetNames.includes('Settings')){
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets['Settings'], {header:1});
+        rows.forEach(row=>{
+          if(!row[0]) return;
+          const key = String(row[0]).trim().toLowerCase();
+          const val = row[1];
+          if(key.includes('questions per')||key==='questions per set'){
+            const n=parseInt(val); if(!isNaN(n)&&n>0){numQuestions=n;document.getElementById('num-questions').value=n;imported.settings++;}
+          } else if(key.includes('points per')){
+            const n=parseInt(val); if(!isNaN(n)&&n>0){pointsPerQuestion=n;document.getElementById('num-ppq').value=n;imported.settings++;}
+          } else if(key.includes('override')){
+            const n=parseInt(val);
+            numQuestionsOverride=(!isNaN(n)&&n>0)?n:null;
+            document.getElementById('num-questions-override').value=numQuestionsOverride||'';
+            imported.settings++;
+          }
+        });
+      }
+
+      // ── Players sheet ──────────────────────────────────────────────────
+      if(wb.SheetNames.includes('Players')){
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets['Players'], {header:1});
+        // Reset extras first
+        extras=[null,null,null,null];
+        let extraSlot=0;
+        rows.slice(1).forEach(row=>{
+          const slot=parseInt(row[0]);
+          if(isNaN(slot)||slot<1||slot>16) return;
+          const pi=slot-1;
+          const name=row[1]!==undefined?String(row[1]).trim():'';
+          const isGhost=String(row[2]||'').trim().toUpperCase()==='YES';
+          const exName=row[3]!==undefined?String(row[3]).trim():'';
+          const exBase=parseInt(row[4]);
+          if(name) {players[pi]=name; imported.players++;}
+          ghosts[pi]=isGhost;
+          if(exName&&!isNaN(exBase)&&exBase>=1&&exBase<=16&&extraSlot<4){
+            extras[extraSlot]={name:exName, baseIndex:exBase-1};
+            extraSlot++;
+          }
+        });
+        buildPlayerInputs();
+        buildExtraPlayerInputs();
+        rebuildDropoutsForExtras();
+      }
+
+      // ── Drop Outs sheet ────────────────────────────────────────────────
+      if(wb.SheetNames.includes('Drop Outs')){
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets['Drop Outs'], {header:1});
+        rows.slice(1).forEach(row=>{
+          const slotRaw=String(row[0]||'').trim();
+          const isExtra=/^E[1-4]$/i.test(slotRaw);
+          const idx=isExtra?15+parseInt(slotRaw.slice(1)):parseInt(slotRaw)-1;
+          if(isNaN(idx)||idx<0||idx>19) return;
+          if(!dropouts[idx]) dropouts[idx]=Array(15).fill(false);
+          for(let r=0;r<15;r++){
+            const v=row[2+r];
+            dropouts[idx][r]=v===1||v==='1'||v===true;
+          }
+          imported.dropouts++;
+        });
+      }
+
+      // ── Scores sheet ───────────────────────────────────────────────────
+      if(wb.SheetNames.includes('Scores')){
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets['Scores'], {header:1});
+        rows.slice(1).forEach(row=>{
+          const r=parseInt(row[0])-1, c=parseInt(row[1])-1;
+          if(isNaN(r)||isNaN(c)||r<0||r>14||c<0||c>3) return;
+          if(!scores[r]) scores[r]={};
+          if(!scores[r][c]) scores[r][c]={a1:'',a2:'',b1:'',b2:''};
+          const sv=(v)=>v!==undefined&&v!==''?v:'';
+          scores[r][c].a1=sv(row[3]); scores[r][c].a2=sv(row[5]);
+          scores[r][c].b1=sv(row[11]); scores[r][c].b2=sv(row[13]);
+          // Extra scores (cols 7,9,15,17)
+          if(row[7]!==undefined&&row[7]!=='') scores[r][c].ea1=row[7];
+          if(row[9]!==undefined&&row[9]!=='') scores[r][c].ea2=row[9];
+          if(row[15]!==undefined&&row[15]!=='') scores[r][c].eb1=row[15];
+          if(row[17]!==undefined&&row[17]!=='') scores[r][c].eb2=row[17];
+          imported.scores++;
+        });
+      }
+
+      // Note: schedule is not imported — always use the generated W(16) schedule.
+      // If no schedule exists yet, we can't restore play state.
+      updateQuestionInfo();
+      saveState();
+      updateLeaderboard();
+      if(tournamentGenerated){
+        renderPlayPage();
+        renderScoreSheet();
+      }
+
+      const a=document.getElementById('play-alert');
+      const parts=[];
+      if(imported.settings) parts.push(`${imported.settings} settings`);
+      if(imported.players) parts.push(`${imported.players} player names`);
+      if(imported.dropouts) parts.push(`${imported.dropouts} dropout rows`);
+      if(imported.scores) parts.push(`${imported.scores} score rows`);
+      a.textContent=`✓ Import complete — ${parts.join(', ') || 'nothing changed'}.`;
+      a.style.display='block';
+      setTimeout(()=>a.style.display='none',4500);
+    }catch(err){
+      alert('Import Fixtures failed: '+err.message);
+    }
+  };
+  reader.readAsBinaryString(file);
+}
+
 function handleObsClick(event, r) {
   if(!tournamentGenerated) return;
   if(event.ctrlKey || event.metaKey) {
@@ -2477,7 +2943,7 @@ function renderScoreSheet() {
             ? `<span style="width:68px;text-align:center;background:rgba(138,155,176,0.1);border:1px dashed rgba(138,155,176,0.3);border-radius:6px;padding:0.4rem;color:var(--muted);font-size:0.9rem;display:inline-block">👻 0</span>`
             : isDropoutPlayer
             ? `<span style="width:68px;text-align:center;background:rgba(192,57,43,0.12);border:1px dashed rgba(192,57,43,0.4);border-radius:6px;padding:0.4rem;color:var(--lose);font-size:0.9rem;display:inline-block">OUT — 0</span>`
-            : `<input type="number" min="0" max="${numQuestionsOverride || numQuestions}" class="ss-score-input" id="ss-inp-${pi}"
+            : `<input type="number" min="0" max="${numQuestionsOverride || numQuestions * pointsPerQuestion}" class="ss-score-input" id="ss-inp-${pi}"
                 value="${val}" placeholder="—"
                 oninput="ssSetScore(${pi},this.value)"
                 onkeydown="ssKeyNav(event,${pi})">`
@@ -2508,7 +2974,7 @@ function renderScoreSheet() {
         <div style="display:flex;justify-content:center">
           ${isDropoutExtra
             ? `<span style="width:68px;text-align:center;background:rgba(192,57,43,0.12);border:1px dashed rgba(192,57,43,0.4);border-radius:6px;padding:0.4rem;color:var(--lose);font-size:0.9rem;display:inline-block">OUT — 0</span>`
-            : `<input type="number" min="0" max="${numQuestionsOverride || numQuestions}" class="ss-score-input" id="ss-inp-e${ei}"
+            : `<input type="number" min="0" max="${numQuestionsOverride || numQuestions * pointsPerQuestion}" class="ss-score-input" id="ss-inp-e${ei}"
                 value="${val}" placeholder="—"
                 oninput="ssSetExtraScore(${ei},${info?info.court:0},'${info?info.key:'a1'}',this.value)"
                 onkeydown="ssKeyNavExtra(event,${ei})">`
@@ -2594,23 +3060,16 @@ function ssKeyNavExtra(event, ei) {
   }
 }
 
-function ssExport() {
-  if(!tournamentGenerated){alert('Generate the tournament first.');return;}
+function buildScoresWorkbook() {
   const keys = ['a1','a2','b1','b2'];
-  const teamKeys = ['teamA[0]','teamA[1]','teamB[0]','teamB[1]'];
-
-  // Build row for each base player (1-16)
   const rows = [];
-  // Header
   const header = ['Team','Name','Pairs With'];
   for(let r=0;r<15;r++) header.push('Round '+(r+1));
   rows.push(header);
 
-  // Base players
   for(let pi=0;pi<16;pi++){
     const row = [pi+1, players[pi], ''];
     for(let r=0;r<15;r++){
-      // find which court and key this player is in for round r
       let val = '';
       if(schedule[r]){
         for(let c=0;c<4;c++){
@@ -2629,11 +3088,10 @@ function ssExport() {
     rows.push(row);
   }
 
-  // Extra players
   extras.forEach((ex,ei)=>{
     if(!ex||!ex.name||ex.baseIndex===null) return;
     const eKeys = {a1:'ea1',a2:'ea2',b1:'eb1',b2:'eb2'};
-    const row = ['E'+(ei+1), ex.name, ex.baseIndex+1]; // Pairs With = base team number
+    const row = ['E'+(ei+1), ex.name, ex.baseIndex+1];
     for(let r=0;r<15;r++){
       let val='';
       if(schedule[r]){
@@ -2654,11 +3112,15 @@ function ssExport() {
   });
 
   const ws = XLSX.utils.aoa_to_sheet(rows);
-  // Style column widths
   ws['!cols'] = [{wch:8},{wch:28},{wch:12},...Array(15).fill({wch:10})];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Scores');
-  XLSX.writeFile(wb, 'americano_scores.xlsx');
+  return wb;
+}
+
+function ssExport() {
+  if(!tournamentGenerated){alert('Generate the tournament first.');return;}
+  XLSX.writeFile(buildScoresWorkbook(), 'americano_scores.xlsx');
 }
 
 function ssImport(input) {
@@ -3005,7 +3467,7 @@ function fillDummyScores() {
     setTimeout(()=>a.style.display='none', 3000);
     return;
   }
-  const max = numQuestions;
+  const max = numQuestions * pointsPerQuestion;
   const numRounds = 15;
   const numCourts = 4;
   for(let r=0;r<numRounds;r++){
@@ -3049,6 +3511,7 @@ function saveState(){
     localStorage.setItem('rr_round', currentRound);
     localStorage.setItem('rr_generated', tournamentGenerated?'1':'0');
     localStorage.setItem('rr_questions', numQuestions);
+    localStorage.setItem('rr_ppq', pointsPerQuestion);
     if(numQuestionsOverride != null) localStorage.setItem('rr_override', numQuestionsOverride);
     else localStorage.removeItem('rr_override');
   } catch(e){}
@@ -3082,6 +3545,7 @@ function loadState(){
     const r=localStorage.getItem('rr_round'); if(r) currentRound=parseInt(r)||0;
     const g=localStorage.getItem('rr_generated'); if(g) tournamentGenerated=(g==='1');
     const q=localStorage.getItem('rr_questions'); if(q){ numQuestions=parseInt(q)||10; document.getElementById('num-questions').value=numQuestions; }
+    const ppq=localStorage.getItem('rr_ppq'); if(ppq){ pointsPerQuestion=parseInt(ppq)||1; document.getElementById('num-ppq').value=pointsPerQuestion; }
     const ov=localStorage.getItem('rr_override'); if(ov){ numQuestionsOverride=parseInt(ov)||null; if(numQuestionsOverride) document.getElementById('num-questions-override').value=numQuestionsOverride; }
   } catch(e){}
 }
@@ -3095,11 +3559,12 @@ function resetAll(){
   ghosts=Array(16).fill(false);
   dropouts=Array.from({length:20},()=>Array(15).fill(false));
   extras=[null,null,null,null];
-  schedule=[]; scores={}; currentRound=0; tournamentGenerated=false; numQuestions=10;
-  try{ ['rr_players','rr_ghosts','rr_dropouts','rr_extras','rr_schedule','rr_scores','rr_round','rr_generated','rr_questions','rr_override'].forEach(k=>localStorage.removeItem(k)); }catch(e){}
+  schedule=[]; scores={}; currentRound=0; tournamentGenerated=false; numQuestions=10; pointsPerQuestion=1;
+  try{ ['rr_players','rr_ghosts','rr_dropouts','rr_extras','rr_schedule','rr_scores','rr_round','rr_generated','rr_questions','rr_ppq','rr_override'].forEach(k=>localStorage.removeItem(k)); }catch(e){}
   buildPlayerInputs();
   buildExtraPlayerInputs();
   document.getElementById('num-questions').value=10;
+  document.getElementById('num-ppq').value=1;
   numQuestionsOverride=null;
   document.getElementById('num-questions-override').value='';
   updateQuestionInfo();
