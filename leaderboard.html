@@ -239,6 +239,7 @@ tbody tr:hover td{background:rgba(255,255,255,0.03)}
 <div class="tabs" id="tabs-bar">
   <button class="tab active" onclick="switchTab(1,this)">Main Standings</button>
   <button class="tab" onclick="switchTab(2,this)">Individual Stats</button>
+  <button class="tab" onclick="switchTab(3,this)">Team Stats</button>
 </div>
 
 <div class="panel active" id="p1">
@@ -276,6 +277,25 @@ tbody tr:hover td{background:rgba(255,255,255,0.03)}
         <th title="Percentage">%</th>
       </tr></thead>
       <tbody id="lb2-body"><tr><td colspan="9" style="text-align:center;color:var(--muted);padding:2rem">Waiting for tournament data…</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="panel" id="p3">
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th style="width:36px">#</th>
+        <th>Team</th>
+        <th title="Sets played">P</th>
+        <th title="Wins" class="win">W</th>
+        <th title="Losses" class="lose">L</th>
+        <th title="Draws">D</th>
+        <th title="Not played (dropped out)">N/P</th>
+        <th title="Team points: combined score of both teams on your court each set">Team Pts</th>
+        <th title="Individual score (tiebreaker)">Indiv</th>
+      </tr></thead>
+      <tbody id="lb3-body"><tr><td colspan="9" style="text-align:center;color:var(--muted);padding:2rem">Waiting for tournament data…</td></tr></tbody>
     </table>
   </div>
 </div>
@@ -359,6 +379,7 @@ function loadAndRender(){
       document.getElementById('tabs-bar').style.display='none';
       document.getElementById('p1').classList.remove('active');
       document.getElementById('p2').classList.remove('active');
+      document.getElementById('p3').classList.remove('active');
       return;
     }
 
@@ -377,17 +398,20 @@ function loadAndRender(){
     const schedule = JSON.parse(rawSched);
     const scores   = JSON.parse(rawScores);
     const numQ     = parseInt(rawQ)||10;
+    const rawPPQ   = localStorage.getItem('rr_ppq');
+    const ppq      = parseInt(rawPPQ)||1;
     const rawOv    = localStorage.getItem('rr_override');
     const ovVal    = rawOv ? parseInt(rawOv)||null : null;
-    const pot      = ovVal!=null ? ovVal : numQ*4;
+    const indivMax = numQ * ppq;
+    const pot      = ovVal!=null ? ovVal : indivMax*4;
     const base     = pot/2;
 
     function isAbsentLB(pi,r){ return ghosts[pi]||(dropouts[pi]&&dropouts[pi][r]); } // kept for safety
 
     const stats={};
-    players.forEach((p,i)=>{ if(!ghosts[i]) stats[i]={name:p,played:0,wins:0,losses:0,draws:0,notPlayed:0,tPts:0,scoreFor:0,scoreAgainst:0,indivScore:0}; });
+    players.forEach((p,i)=>{ if(!ghosts[i]) stats[i]={name:p,played:0,wins:0,losses:0,draws:0,notPlayed:0,tPts:0,teamPts:0,scoreFor:0,scoreAgainst:0,indivScore:0}; });
     // Add extra players
-    extras.forEach((ex,ei)=>{ if(ex&&ex.name&&ex.baseIndex!==null) stats[16+ei]={name:ex.name,played:0,wins:0,losses:0,draws:0,notPlayed:0,tPts:0,scoreFor:0,scoreAgainst:0,indivScore:0}; });
+    extras.forEach((ex,ei)=>{ if(ex&&ex.name&&ex.baseIndex!==null) stats[16+ei]={name:ex.name,played:0,wins:0,losses:0,draws:0,notPlayed:0,tPts:0,teamPts:0,scoreFor:0,scoreAgainst:0,indivScore:0}; });
 
     let roundsDone=0;
     for(let r=0;r<15;r++){
@@ -434,7 +458,7 @@ function loadAndRender(){
         const {tpA,tpB}=forcedDraw?{tpA:base,tpB:base}:calcBothPtsLB(sA,sB,pot);
         const aWin=!forcedDraw&&sA>sB, bWin=!forcedDraw&&sB>sA;
 
-        const accumSlot=(pi,eIdx,rawBase,rawEx,isDo,isDoEx,tp,win,lose)=>{
+        const accumSlot=(pi,eIdx,rawBase,rawEx,isDo,isDoEx,tp,win,lose,sidePts)=>{
           if(ghosts[pi]) return;
           const baseAbsent=ghosts[pi]||(dropouts[pi]&&dropouts[pi][r]);
           const extraMissing=rawEx===''||rawEx===undefined||rawEx===null;
@@ -442,7 +466,7 @@ function loadAndRender(){
             const s=stats[pi];
             if(isDo){ s.notPlayed++; }
             else if(!baseAbsent){
-              s.played++;s.tPts+=tp;s.scoreFor+=sA;s.scoreAgainst+=sB;
+              s.played++;s.tPts+=tp;s.teamPts+=sidePts;s.scoreFor+=sA;s.scoreAgainst+=sB;
               s.indivScore+=parseNum(rawBase);
               if(win)s.wins++;else if(lose)s.losses++;else s.draws++;
             }
@@ -452,17 +476,17 @@ function loadAndRender(){
             const extraAbsent=dropouts[eIdx]&&dropouts[eIdx][r];
             if(isDoEx){ se.notPlayed++; }
             else if(!extraAbsent){
-              se.played++;se.tPts+=tp;se.scoreFor+=sA;se.scoreAgainst+=sB;
+              se.played++;se.tPts+=tp;se.teamPts+=sidePts;se.scoreFor+=sA;se.scoreAgainst+=sB;
               se.indivScore+=parseNum(rawEx);
               if(win)se.wins++;else if(lose)se.losses++;else se.draws++;
             }
           }
         };
 
-        accumSlot(piA1,exA1,rawA1,rawEA1,doA1,doExA1,tpA,aWin,bWin);
-        accumSlot(piA2,exA2,rawA2,rawEA2,doA2,doExA2,tpA,aWin,bWin);
-        accumSlot(piB1,exB1,rawB1,rawEB1,doB1,doExB1,tpB,bWin,aWin);
-        accumSlot(piB2,exB2,rawB2,rawEB2,doB2,doExB2,tpB,bWin,aWin);
+        accumSlot(piA1,exA1,rawA1,rawEA1,doA1,doExA1,tpA,aWin,bWin,sA);
+        accumSlot(piA2,exA2,rawA2,rawEA2,doA2,doExA2,tpA,aWin,bWin,sA);
+        accumSlot(piB1,exB1,rawB1,rawEB1,doB1,doExB1,tpB,bWin,aWin,sB);
+        accumSlot(piB2,exB2,rawB2,rawEB2,doB2,doExB2,tpB,bWin,aWin,sB);
       }
       if(roundComplete) roundsDone++;
     }
@@ -502,7 +526,7 @@ function loadAndRender(){
     });
     document.getElementById('lb2-body').innerHTML=lb2.map((s,i)=>{
       const rc=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'rank-n';
-      const pct=s.played>0?Math.round(s.indivScore/(numQ*15)*100):0;
+      const pct=s.played>0?Math.round(s.indivScore/(indivMax*15)*100):0;
       return `<tr>
         <td><span class="rank-badge ${rc}">${i+1}</span></td>
         <td class="player-name">${s.name}</td>
@@ -511,8 +535,31 @@ function loadAndRender(){
         <td class="lose">${s.losses}</td>
         <td style="color:${s.notPlayed>0?'var(--lose)':'var(--muted)'}">${s.notPlayed>0?s.notPlayed:'—'}</td>
         <td class="pts">${s.indivScore}</td>
-        <td style="color:var(--muted)">${numQ*15}</td>
+        <td style="color:var(--muted)">${indivMax*15}</td>
         <td style="color:${pct>=50?'var(--win)':'var(--lose)'}">${pct}%</td>
+      </tr>`;
+    }).join('');
+
+    // LB3 — Team Stats (combined court score both teams, accumulated)
+    const lb3=[...Object.values(stats)].sort((a,b)=>{
+      if(b.teamPts!==a.teamPts) return b.teamPts-a.teamPts;
+      if(b.wins!==a.wins) return b.wins-a.wins;
+      if(a.losses!==b.losses) return a.losses-b.losses;
+      if(b.draws!==a.draws) return b.draws-a.draws;
+      return b.indivScore-a.indivScore;
+    });
+    document.getElementById('lb3-body').innerHTML=lb3.map((s,i)=>{
+      const rc=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'rank-n';
+      return `<tr>
+        <td><span class="rank-badge ${rc}">${i+1}</span></td>
+        <td class="player-name">${s.name}</td>
+        <td>${s.played}</td>
+        <td class="win">${s.wins}</td>
+        <td class="lose">${s.losses}</td>
+        <td style="color:var(--muted)">${s.draws}</td>
+        <td style="color:${s.notPlayed>0?'var(--lose)':'var(--muted)'}">${s.notPlayed>0?s.notPlayed:'—'}</td>
+        <td class="pts">${s.teamPts}</td>
+        <td style="color:var(--muted)">${s.indivScore}</td>
       </tr>`;
     }).join('');
 
@@ -533,6 +580,7 @@ function switchTab(n,el){
   el.classList.add('active');
   document.getElementById('p1').classList.toggle('active',n===1);
   document.getElementById('p2').classList.toggle('active',n===2);
+  document.getElementById('p3').classList.toggle('active',n===3);
 }
 
 // Run immediately then every 3 seconds

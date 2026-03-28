@@ -1076,6 +1076,10 @@ h1, h2, h3, .display { font-family: 'Bebas Neue', cursive; letter-spacing: 0.05e
       style="padding:0.6rem 1.4rem;font-size:0.85rem;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;cursor:pointer;border:none;background:transparent;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;font-family:'DM Sans',sans-serif">
       Individual Stats
     </button>
+    <button id="lb-tab-3" onclick="showLbTab(3)"
+      style="padding:0.6rem 1.4rem;font-size:0.85rem;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;cursor:pointer;border:none;background:transparent;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;font-family:'DM Sans',sans-serif">
+      Team Stats
+    </button>
   </div>
 
   <!-- LB 1: Main — team points (win/difference based) -->
@@ -1123,6 +1127,30 @@ h1, h2, h3, .display { font-family: 'Bebas Neue', cursive; letter-spacing: 0.05e
           <th title="Score percentage">%</th>
         </tr></thead>
         <tbody id="lb2-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- LB 3: Team Stats (combined side score per match) -->
+  <div id="lb-panel-3" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;gap:1rem;flex-wrap:wrap">
+      <p style="color:var(--muted);font-size:0.85rem;margin:0" id="lb3-desc"></p>
+      <button class="btn btn-secondary btn-sm" onclick="exportLbImage(3)" title="Export as image for sharing">&#128247; Share Image</button>
+    </div>
+    <div class="panel" style="padding:0;overflow:hidden">
+      <table class="leaderboard-table">
+        <thead><tr>
+          <th style="width:44px">#</th>
+          <th>Player</th>
+          <th title="Sets played">P</th>
+          <th title="Wins">W</th>
+          <th title="Losses">L</th>
+          <th title="Draws">D</th>
+          <th title="Not played (dropped out)">N/P</th>
+          <th title="Team points: combined score of both teams on your court each set">Team Pts</th>
+          <th title="Individual questions correct (tiebreaker)">Indiv</th>
+        </tr></thead>
+        <tbody id="lb3-body"></tbody>
       </table>
     </div>
   </div>
@@ -1804,8 +1832,8 @@ let currentLbTab = 1;
 
 // ── Shared leaderboard canvas builder ───────────────────────────────────
 function buildLeaderboardCanvas(tab, logoImg) {
-  const isLB1 = tab === 1;
-  const tbody = document.getElementById(isLB1 ? 'lb1-body' : 'lb2-body');
+  const isLB1 = tab === 1, isLB3 = tab === 3;
+  const tbody = document.getElementById(isLB1 ? 'lb1-body' : (isLB3 ? 'lb3-body' : 'lb2-body'));
   const thead = tbody ? tbody.closest('table').querySelector('thead') : null;
   if(!tbody||!thead) return null;
   const rows = Array.from(tbody.querySelectorAll('tr'));
@@ -1852,7 +1880,7 @@ function buildLeaderboardCanvas(tab, logoImg) {
   ctx.font=`bold 28px Arial`; ctx.fillStyle='#ffffff'; ctx.textAlign='center';
   ctx.fillText('AMERICANO',totalW/2,y+30);
   ctx.font=`16px Arial`; ctx.fillStyle='#8a87b0';
-  ctx.fillText(isLB1?'Main Standings':'Individual Stats',totalW/2,y+52);
+  ctx.fillText(isLB1?'Main Standings':isLB3?'Team Stats':'Individual Stats',totalW/2,y+52);
   y+=TITLE_H;
 
   const colXs=[MARGIN, MARGIN+52];
@@ -1901,7 +1929,7 @@ function buildLeaderboardCanvas(tab, logoImg) {
         const hdr=headerCells[i].toUpperCase();
         if(hdr==='W') colour='#27ae60';
         else if(hdr==='L') colour='#c0392b';
-        else if(hdr==='T.PTS'||hdr==='SCORE') colour='#00d4ff';
+        else if(hdr==='T.PTS'||hdr==='SCORE'||hdr==='TEAM PTS') colour='#00d4ff';
         else if(hdr==='N/P'&&cell!=='—') colour='#c0392b';
         else if(hdr==='+/-'||hdr==='+/−') colour=cell.startsWith('+')||(!cell.startsWith('-')&&cell!=='0'&&cell!=='')?'#27ae60':'#c0392b';
         else if(hdr==='%') colour=parseInt(cell)>=50?'#27ae60':'#c0392b';
@@ -1925,7 +1953,7 @@ function buildLeaderboardCanvas(tab, logoImg) {
 }
 
 function exportLbImage(tab) {
-  const tbody = document.getElementById(tab===1?'lb1-body':'lb2-body');
+  const tbody = document.getElementById(tab===1?'lb1-body':tab===3?'lb3-body':'lb2-body');
   if(!tbody||!tbody.querySelectorAll('tr').length){alert('No leaderboard data yet.');return;}
 
   const logoSrc=getLogoSrc();
@@ -1937,7 +1965,7 @@ function exportLbImage(tab) {
       const canvas=buildLeaderboardCanvas(tab,logoImg);
       if(!canvas) return;
       const link=document.createElement('a');
-      link.download=`americano_${tab===1?'standings':'individual'}_${dateStr}.png`;
+      link.download=`americano_${tab===1?'standings':tab===3?'teamstats':'individual'}_${dateStr}.png`;
       link.href=canvas.toDataURL('image/png'); link.click();
       return;
     }
@@ -1947,8 +1975,11 @@ function exportLbImage(tab) {
     // Both leaderboard images
     const c1=buildLeaderboardCanvas(1,logoImg);
     const c2=buildLeaderboardCanvas(2,logoImg);
+    // Team Stats image will be built below
     if(c1) zip.file(`images/americano_standings_${dateStr}.png`, c1.toDataURL('image/png').split(',')[1],{base64:true});
     if(c2) zip.file(`images/americano_individual_${dateStr}.png`, c2.toDataURL('image/png').split(',')[1],{base64:true});
+    const c3=buildLeaderboardCanvas(3,logoImg);
+    if(c3) zip.file(`images/americano_teamstats_${dateStr}.png`, c3.toDataURL('image/png').split(',')[1],{base64:true});
 
     // All 15 round images
     for(let ri=0;ri<15;ri++){
@@ -1989,12 +2020,11 @@ function showLbTab(n) {
   currentLbTab = n;
   document.getElementById('lb-panel-1').style.display = n===1 ? '' : 'none';
   document.getElementById('lb-panel-2').style.display = n===2 ? '' : 'none';
-  const t1 = document.getElementById('lb-tab-1');
-  const t2 = document.getElementById('lb-tab-2');
-  t1.style.color = n===1 ? 'var(--accent)' : 'var(--muted)';
-  t1.style.borderBottomColor = n===1 ? 'var(--accent)' : 'transparent';
-  t2.style.color = n===2 ? 'var(--accent)' : 'var(--muted)';
-  t2.style.borderBottomColor = n===2 ? 'var(--accent)' : 'transparent';
+  document.getElementById('lb-panel-3').style.display = n===3 ? '' : 'none';
+  [1,2,3].forEach(i=>{
+    const t=document.getElementById('lb-tab-'+i);
+    if(t){ t.style.color=n===i?'var(--accent)':'var(--muted)'; t.style.borderBottomColor=n===i?'var(--accent)':'transparent'; }
+  });
 }
 
 function updateLeaderboard() {
@@ -2006,7 +2036,7 @@ function updateLeaderboard() {
   const stats = {};
   players.forEach((p,i)=>{ if(!ghosts[i]) stats[i] = {
     name: p, played: 0, wins: 0, losses: 0, draws: 0, notPlayed: 0,
-    tPts: 0, teamScoreFor: 0, teamScoreAgainst: 0, indivScore: 0,
+    tPts: 0, teamPts: 0, teamScoreFor: 0, teamScoreAgainst: 0, indivScore: 0,
     isExtra: false,
   }; });
   // Add extra players to stats
@@ -2014,7 +2044,7 @@ function updateLeaderboard() {
     if(ex && ex.name && ex.baseIndex !== null) {
       const key = 16 + ei;
       stats[key] = { name: ex.name, played: 0, wins: 0, losses: 0, draws: 0, notPlayed: 0,
-        tPts: 0, teamScoreFor: 0, teamScoreAgainst: 0, indivScore: 0, isExtra: true };
+        tPts: 0, teamPts: 0, teamScoreFor: 0, teamScoreAgainst: 0, indivScore: 0, isExtra: true };
     }
   });
 
@@ -2064,7 +2094,7 @@ function updateLeaderboard() {
       const aWin=!forcedDraw&&sA>sB, bWin=!forcedDraw&&sB>sA;
 
       // Accumulate stats per slot — base player and extra player separately
-      const accumSlot=(pi,eIdx,rawBase,rawEx,isDo,isDoEx,tp,win,lose)=>{
+      const accumSlot=(pi,eIdx,rawBase,rawEx,isDo,isDoEx,tp,win,lose,sidePts)=>{
         if(ghosts[pi]) return;
         const baseAbsent=isAbsent(pi,r);
         const extraAbsent=eIdx!==null?isExtraAbsent(eIdx,r):true;
@@ -2075,7 +2105,7 @@ function updateLeaderboard() {
           const s=stats[pi];
           if(isDo){ s.notPlayed++; }
           else if(!baseAbsent){
-            s.played++; s.tPts+=tp; s.teamScoreFor+=sA; s.teamScoreAgainst+=sB;
+            s.played++; s.tPts+=tp; s.teamPts+=sidePts; s.teamScoreFor+=sA; s.teamScoreAgainst+=sB;
             s.indivScore+=parseNum(rawBase);
             if(win)s.wins++;else if(lose)s.losses++;else s.draws++;
           }
@@ -2085,7 +2115,7 @@ function updateLeaderboard() {
           const se=stats[eIdx];
           if(isDoEx){ se.notPlayed++; }
           else if(!extraAbsent){
-            se.played++; se.tPts+=tp; se.teamScoreFor+=sA; se.teamScoreAgainst+=sB;
+            se.played++; se.tPts+=tp; se.teamPts+=sidePts; se.teamScoreFor+=sA; se.teamScoreAgainst+=sB;
             se.indivScore+=parseNum(rawEx);
             if(win)se.wins++;else if(lose)se.losses++;else se.draws++;
           }
@@ -2093,10 +2123,10 @@ function updateLeaderboard() {
       };
 
       const aWinB=aWin, bWinA=bWin;
-      accumSlot(piA1,exA1,rawA1,rawEA1,doA1,doExA1,tpA,aWin,bWin);
-      accumSlot(piA2,exA2,rawA2,rawEA2,doA2,doExA2,tpA,aWin,bWin);
-      accumSlot(piB1,exB1,rawB1,rawEB1,doB1,doExB1,tpB,bWin,aWin);
-      accumSlot(piB2,exB2,rawB2,rawEB2,doB2,doExB2,tpB,bWin,aWin);
+      accumSlot(piA1,exA1,rawA1,rawEA1,doA1,doExA1,tpA,aWin,bWin,sA);
+      accumSlot(piA2,exA2,rawA2,rawEA2,doA2,doExA2,tpA,aWin,bWin,sA);
+      accumSlot(piB1,exB1,rawB1,rawEB1,doB1,doExB1,tpB,bWin,aWin,sB);
+      accumSlot(piB2,exB2,rawB2,rawEB2,doB2,doExB2,tpB,bWin,aWin,sB);
     }
   }
 
@@ -2157,6 +2187,33 @@ function updateLeaderboard() {
       <td style="font-family:'Bebas Neue',cursive;font-size:1.1rem;color:var(--accent)">${s.indivScore}</td>
       <td style="color:var(--muted)">${numQuestions * pointsPerQuestion * numRounds}</td>
       <td style="color:${pct>=50?'var(--win)':'var(--lose)'}">${pct}%</td>
+    </tr>`;
+  }).join('');
+
+  // ---- LB3: Team Stats (combined court score both teams, accumulated) ----
+  const lb3rows = [...allStats].sort((a,b) => {
+    if(b.teamPts !== a.teamPts) return b.teamPts - a.teamPts;
+    if(b.wins !== a.wins) return b.wins - a.wins;
+    if(a.losses !== b.losses) return a.losses - b.losses;
+    if(b.draws !== a.draws) return b.draws - a.draws;
+    return b.indivScore - a.indivScore;
+  });
+
+  document.getElementById('lb3-desc').textContent =
+    `Ranked by: Team Pts → W → L → D → Indiv. Team Pts = combined score of both teams on your court each set (sum of all four players' scores).`;
+
+  document.getElementById('lb3-body').innerHTML = lb3rows.map((s,i) => {
+    const rankClass = i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'rank-n';
+    return `<tr>
+      <td><span class="rank-badge ${rankClass}">${i+1}</span></td>
+      <td style="font-weight:500">${s.name}</td>
+      <td>${s.played}</td>
+      <td style="color:var(--win)">${s.wins}</td>
+      <td style="color:var(--lose)">${s.losses}</td>
+      <td style="color:var(--muted)">${s.draws}</td>
+      <td style="color:${s.notPlayed>0?'var(--lose)':'var(--muted)'}">${s.notPlayed>0?s.notPlayed:'—'}</td>
+      <td style="font-family:'Bebas Neue',cursive;font-size:1.1rem;color:var(--accent)">${s.teamPts}</td>
+      <td style="color:var(--muted)">${s.indivScore}</td>
     </tr>`;
   }).join('');
 }
@@ -2494,6 +2551,79 @@ function buildFixturesWorkbook() {
   const wsSc = XLSX.utils.aoa_to_sheet(scData);
   wsSc['!cols'] = [{wch:6},{wch:6},...Array(16).fill({wch:16}),{wch:14},{wch:12},{wch:12},{wch:12},{wch:12},{wch:14}];
   XLSX.utils.book_append_sheet(wb, wsSc, 'Scores');
+
+  // Sheet 6: Team Stats leaderboard
+  if(tournamentGenerated){
+    try{
+      // Re-compute team stats for export
+      const tsStats={};
+      players.forEach((p,i)=>{ if(!ghosts[i]) tsStats[i]={name:p,played:0,wins:0,losses:0,draws:0,notPlayed:0,teamPts:0,indivScore:0}; });
+      extras.forEach((ex,ei)=>{ if(ex&&ex.name&&ex.baseIndex!==null) tsStats[16+ei]={name:ex.name,played:0,wins:0,losses:0,draws:0,notPlayed:0,teamPts:0,indivScore:0}; });
+      const { base:tsBase } = effectivePot();
+      for(let r=0;r<15;r++){
+        if(!scores[r]||!schedule[r]) continue;
+        for(let c=0;c<4;c++){
+          const sc=scores[r][c], match=schedule[r][c];
+          const [piA1,piA2,piB1,piB2]=[match.teamA[0],match.teamA[1],match.teamB[0],match.teamB[1]];
+          const exA1=extraForBase(piA1),exA2=extraForBase(piA2),exB1=extraForBase(piB1),exB2=extraForBase(piB2);
+          const exRaw=k=>sc[k]!==undefined&&sc[k]!==null&&sc[k]!==''?sc[k]:'';
+          const rawEA1=exA1!==null?exRaw('ea1'):'',rawEA2=exA2!==null?exRaw('ea2'):'';
+          const rawEB1=exB1!==null?exRaw('eb1'):'',rawEB2=exB2!==null?exRaw('eb2'):'';
+          const abA1=isSlotAbsent(piA1,r),abA2=isSlotAbsent(piA2,r),abB1=isSlotAbsent(piB1,r),abB2=isSlotAbsent(piB2,r);
+          const doA1=dropouts[piA1]&&dropouts[piA1][r],doA2=dropouts[piA2]&&dropouts[piA2][r];
+          const doB1=dropouts[piB1]&&dropouts[piB1][r],doB2=dropouts[piB2]&&dropouts[piB2][r];
+          const doExA1=exA1!==null&&dropouts[exA1]&&dropouts[exA1][r];
+          const doExA2=exA2!==null&&dropouts[exA2]&&dropouts[exA2][r];
+          const doExB1=exB1!==null&&dropouts[exB1]&&dropouts[exB1][r];
+          const doExB2=exB2!==null&&dropouts[exB2]&&dropouts[exB2][r];
+          const rawA1=abA1?0:(sc.a1===''?'':sc.a1),rawA2=abA2?0:(sc.a2===''?'':sc.a2);
+          const rawB1=abB1?0:(sc.b1===''?'':sc.b1),rawB2=abB2?0:(sc.b2===''?'':sc.b2);
+          const slotOk=(pi,raw)=>isSlotAbsent(pi,r)||(!(isAbsent(pi,r))&&raw!==''&&raw!==undefined)||isAbsent(pi,r);
+          const aFilled=(abA1||(rawA1!==''&&rawA1!==undefined))&&(abA2||(rawA2!==''&&rawA2!==undefined));
+          const bFilled=(abB1||(rawB1!==''&&rawB1!==undefined))&&(abB2||(rawB2!==''&&rawB2!==undefined));
+          if(!aFilled||!bFilled) continue;
+          const forcedDraw=(abA1&&abA2)||(abB1&&abB2)||(ghosts[piA1]&&doA2)||(ghosts[piA2]&&doA1)||(ghosts[piB1]&&doB2)||(ghosts[piB2]&&doB1);
+          const sA=teamTotal(piA1,piA2,rawA1,rawA2,r,rawEA1,rawEA2);
+          const sB=teamTotal(piB1,piB2,rawB1,rawB2,r,rawEB1,rawEB2);
+          const {tpA,tpB}=forcedDraw?{tpA:tsBase,tpB:tsBase}:calcBothPts(sA,sB);
+          const aWin=!forcedDraw&&sA>sB,bWin=!forcedDraw&&sB>sA;
+          const combined=sA+sB;
+          const tsAccum=(pi,eIdx,rawBase,rawEx,isDo,isDoEx,tp,win,lose)=>{
+            if(ghosts[pi]) return;
+            const baseAbs=isAbsent(pi,r);
+            const exMiss=(rawEx===''||rawEx===undefined||rawEx===null);
+            if(tsStats[pi]!==undefined){
+              const s=tsStats[pi];
+              if(isDo){s.notPlayed++;}
+              else if(!baseAbs){s.played++;s.teamPts+=combined;s.indivScore+=parseNum(rawBase);if(win)s.wins++;else if(lose)s.losses++;else s.draws++;}
+            }
+            if(eIdx!==null&&tsStats[eIdx]!==undefined&&!exMiss){
+              const se=tsStats[eIdx];
+              const extraAbs=dropouts[eIdx]&&dropouts[eIdx][r];
+              if(isDoEx){se.notPlayed++;}
+              else if(!extraAbs){se.played++;se.teamPts+=combined;se.indivScore+=parseNum(rawEx);if(win)se.wins++;else if(lose)se.losses++;else se.draws++;}
+            }
+          };
+          tsAccum(piA1,exA1,rawA1,rawEA1,doA1,doExA1,tpA,aWin,bWin);
+          tsAccum(piA2,exA2,rawA2,rawEA2,doA2,doExA2,tpA,aWin,bWin);
+          tsAccum(piB1,exB1,rawB1,rawEB1,doB1,doExB1,tpB,bWin,aWin);
+          tsAccum(piB2,exB2,rawB2,rawEB2,doB2,doExB2,tpB,bWin,aWin);
+        }
+      }
+      const tsRows=Object.values(tsStats).sort((a,b)=>{
+        if(b.teamPts!==a.teamPts) return b.teamPts-a.teamPts;
+        if(b.wins!==a.wins) return b.wins-a.wins;
+        if(a.losses!==b.losses) return a.losses-b.losses;
+        if(b.draws!==a.draws) return b.draws-a.draws;
+        return b.indivScore-a.indivScore;
+      });
+      const tsData=[['Rank','Player','P','W','L','D','N/P','Team Pts','Indiv Score']];
+      tsRows.forEach((s,i)=>tsData.push([i+1,s.name,s.played,s.wins,s.losses,s.draws,s.notPlayed>0?s.notPlayed:'',s.teamPts,s.indivScore]));
+      const wsTs=XLSX.utils.aoa_to_sheet(tsData);
+      wsTs['!cols']=[{wch:6},{wch:28},{wch:6},{wch:6},{wch:6},{wch:6},{wch:6},{wch:10},{wch:12}];
+      XLSX.utils.book_append_sheet(wb,wsTs,'Team Stats');
+    }catch(e){}
+  }
 
   return wb;
 }
