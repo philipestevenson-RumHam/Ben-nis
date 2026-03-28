@@ -45,6 +45,18 @@ body::before{content:'';position:fixed;inset:0;background-image:url('data:image/
 .status-bar{position:fixed;bottom:8px;right:12px;font-size:0.7rem;color:var(--muted);display:flex;align-items:center;gap:6px;z-index:10;}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--win);animation:pulse 2s infinite;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+.play-btn{background:var(--grad);border:none;color:#fff;border-radius:20px;padding:5px 16px;font-family:'Bebas Neue',cursive;font-size:clamp(0.75rem,1.3vw,1.05rem);letter-spacing:0.08em;cursor:pointer;transition:opacity 0.15s;flex-shrink:0;}
+.play-btn:hover{opacity:0.82;}
+.court-ind{font-family:'Bebas Neue',cursive;font-size:clamp(0.7rem,1.2vw,0.95rem);color:var(--accent);letter-spacing:0.1em;min-width:5.5em;text-align:center;display:none;}
+.grid.single{grid-template-columns:1fr;grid-template-rows:1fr;}
+.grid.single .card{border-radius:14px;}
+.grid.single .card-hdr span{font-size:clamp(1.1rem,2.4vw,2rem);}
+.grid.single .pname{font-size:clamp(0.8rem,1.6vw,1.4rem);}
+.grid.single .pscore{font-size:clamp(1rem,2vw,1.8rem);}
+.grid.single .pts{font-size:clamp(1.3rem,3vw,2.6rem);}
+.grid.single .result{font-size:clamp(1.2rem,2.6vw,2.2rem);}
+.grid.single .total-val{font-size:clamp(0.9rem,1.6vw,1.4rem);}
+.grid.single .team-label{font-size:clamp(0.9rem,1.7vw,1.5rem);}
 </style>
 </head>
 <body>
@@ -55,6 +67,8 @@ body::before{content:'';position:fixed;inset:0;background-image:url('data:image/
       <button class="nav-btn" id="btn-prev" onclick="navRound(-1)">◀</button>
       <div class="round-label" id="round-label">Loading…</div>
       <button class="nav-btn" id="btn-next" onclick="navRound(1)">▶</button>
+      <button class="play-btn" id="play-btn" onclick="toggleCycle()">▶ Play</button>
+      <span class="court-ind" id="court-ind"></span>
     </div>
     <div class="grid" id="grid"></div>
   </div>
@@ -65,6 +79,9 @@ body::before{content:'';position:fixed;inset:0;background-image:url('data:image/
 let obsRound = 0;
 let lastData = null;
 let rafIds = {};
+let cycleActive = false;
+let cycleCourtIdx = 0;
+let cycleTimer = null;
 
 function parseNum(v){ const n=parseInt(v); return isNaN(n)?0:n; }
 
@@ -119,12 +136,13 @@ function courtSvgIcon(){
   return `<svg width="16" height="16" viewBox="0 0 18 18" fill="none" style="flex-shrink:0"><rect x="1" y="1" width="16" height="16" rx="2" stroke="white" stroke-width="1.5"/><line x1="1" y1="9" x2="17" y2="9" stroke="white" stroke-width="1"/><line x1="9" y1="1" x2="9" y2="17" stroke="white" stroke-width="1"/></svg>`;
 }
 
-function renderGrid(r, data){
+function renderGrid(r, data, singleCourt=null){
   const {players,ghosts,extras,dropouts,schedule,scores,numQuestions,numQuestionsOverride} = data;
   if(!schedule[r]) { document.getElementById('grid').innerHTML='<div style="color:var(--muted);text-align:center;padding:2rem">No data for this round</div>'; return; }
   const {max:pot,base} = effectivePot(numQuestions, numQuestionsOverride);
   let html='';
   for(let c=0;c<4;c++){
+    if(singleCourt!==null && c!==singleCourt) continue;
     const m=schedule[r][c];
     const sc=scores[r]?scores[r][c]:null;
     const [piA1,piA2,piB1,piB2]=[m.teamA[0],m.teamA[1],m.teamB[0],m.teamB[1]];
@@ -239,7 +257,37 @@ function render(){
   document.getElementById('round-label').textContent=`Round ${obsRound+1} of 15`;
   document.getElementById('btn-prev').disabled=obsRound===0;
   document.getElementById('btn-next').disabled=obsRound===14;
-  renderGrid(obsRound,data);
+  renderGrid(obsRound,data,cycleActive?cycleCourtIdx:null);
+}
+
+function startCycle(){
+  cycleActive=true;
+  cycleCourtIdx=0;
+  document.getElementById('play-btn').textContent='⏹ Stop';
+  document.getElementById('grid').classList.add('single');
+  const ind=document.getElementById('court-ind');
+  ind.style.display='';
+  ind.textContent='Court 1 / 4';
+  if(lastData) renderGrid(obsRound,lastData,0);
+  cycleTimer=setInterval(()=>{
+    cycleCourtIdx=(cycleCourtIdx+1)%4;
+    document.getElementById('court-ind').textContent=`Court ${cycleCourtIdx+1} / 4`;
+    if(lastData) renderGrid(obsRound,lastData,cycleCourtIdx);
+  },3000);
+}
+
+function stopCycle(){
+  cycleActive=false;
+  clearInterval(cycleTimer);
+  cycleTimer=null;
+  document.getElementById('play-btn').textContent='▶ Play';
+  document.getElementById('grid').classList.remove('single');
+  document.getElementById('court-ind').style.display='none';
+  if(lastData) renderGrid(obsRound,lastData,null);
+}
+
+function toggleCycle(){
+  if(cycleActive) stopCycle(); else startCycle();
 }
 
 function load(){

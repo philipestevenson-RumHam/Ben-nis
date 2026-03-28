@@ -420,6 +420,15 @@ h1, h2, h3, .display { font-family: 'Bebas Neue', cursive; letter-spacing: 0.05e
   margin-bottom: 1.2%;
   flex-shrink: 0;
 }
+/* Inline overlay nav bar */
+.g-round-bar{display:flex;align-items:center;justify-content:center;gap:1.2rem;margin-bottom:1.2%;flex-shrink:0;}
+.g-nav-btn{background:none;border:1px solid rgba(255,255,255,0.25);color:var(--accent);border-radius:50%;width:clamp(22px,2.5vw,38px);height:clamp(22px,2.5vw,38px);font-size:clamp(0.8rem,1.5vw,1.2rem);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+.g-nav-btn:hover:not(:disabled){background:rgba(0,212,255,0.15);}
+.g-nav-btn:disabled{opacity:0.2;cursor:default;}
+.g-play-btn{background:linear-gradient(135deg,#00d4ff,#7b2ff7);border:none;color:#fff;border-radius:20px;padding:5px 16px;font-family:'Bebas Neue',cursive;font-size:clamp(0.75rem,1.3vw,1.05rem);letter-spacing:0.08em;cursor:pointer;transition:opacity 0.15s;flex-shrink:0;}
+.g-play-btn:hover{opacity:0.82;}
+.g-court-ind{font-family:'Bebas Neue',cursive;font-size:clamp(0.7rem,1.2vw,0.95rem);color:var(--accent);letter-spacing:0.1em;min-width:5.5em;text-align:center;display:none;}
+
 /* Court grid — always 2×2 */
 .court-graphic-grid {
   display: grid;
@@ -1223,6 +1232,9 @@ let schedule = [];
 let scores = {};
 let currentRound = 0;
 let obsRound = 0; // round currently shown in OBS overlay
+let inlineCycleActive = false;
+let inlineCycleCourtIdx = 0;
+let inlineCycleTimer = null;
 let tournamentGenerated = false;
 let numQuestions = 10;
 let pointsPerQuestion = 1; // multiplier: each correct answer = this many points
@@ -2769,7 +2781,7 @@ function obsNavRound(delta) {
   localStorage.setItem('rr_obs_round', obsRound);
 }
 
-function showRoundGraphic(r, isResults) {
+function showRoundGraphic(r, isResults, singleCourt=null) {
   if(!tournamentGenerated) return;
   obsRound = r;
   localStorage.setItem('rr_obs_round', r);
@@ -2783,23 +2795,51 @@ function showRoundGraphic(r, isResults) {
 
   let courts = '';
   for(let c=0;c<numCourts;c++){
+    if(singleCourt!==null && c!==singleCourt) continue;
     const match=round[c];
     const sc=scores[r]?scores[r][c]:null;
     courts += drawCourtCard(match.teamA[0],match.teamA[1],match.teamB[0],match.teamB[1],sc,c+1,r);
   }
 
-  const gridCols = numCourts <= 4 ? 2 : numCourts <= 6 ? 3 : 4;
+  const gridCols = singleCourt!==null ? 1 : (numCourts <= 4 ? 2 : numCourts <= 6 ? 3 : 4);
   content.innerHTML = `
     <div class="graphic-inner">
       <div class="graphic-title">AMERICANO COURTS</div>
-      <div style="display:flex;align-items:center;justify-content:center;gap:1.2rem;margin-bottom:1.2%">
-        <button onclick="obsNavRound(-1)" ${r===0?'disabled':''} style="background:none;border:1px solid rgba(255,255,255,0.2);color:${r===0?'rgba(255,255,255,0.2)':'var(--accent)'};border-radius:50%;width:clamp(22px,2.5vw,36px);height:clamp(22px,2.5vw,36px);font-size:clamp(0.8rem,1.5vw,1.2rem);cursor:${r===0?'default':'pointer'};display:flex;align-items:center;justify-content:center;transition:all 0.15s">◀</button>
+      <div class="g-round-bar">
+        <button class="g-nav-btn" onclick="obsNavRound(-1)" ${r===0?'disabled':''}>◀</button>
         <div class="graphic-round-label" style="margin-bottom:0">Round ${r+1} of ${numRounds}</div>
-        <button onclick="obsNavRound(1)" ${r===14?'disabled':''} style="background:none;border:1px solid rgba(255,255,255,0.2);color:${r===14?'rgba(255,255,255,0.2)':'var(--accent)'};border-radius:50%;width:clamp(22px,2.5vw,36px);height:clamp(22px,2.5vw,36px);font-size:clamp(0.8rem,1.5vw,1.2rem);cursor:${r===14?'default':'pointer'};display:flex;align-items:center;justify-content:center;transition:all 0.15s">▶</button>
+        <button class="g-nav-btn" onclick="obsNavRound(1)" ${r===14?'disabled':''}>▶</button>
+        <button class="g-play-btn" id="inline-play-btn" onclick="toggleInlineCycle()">${inlineCycleActive?'⏹ Stop':'▶ Play'}</button>
+        <span class="g-court-ind" id="inline-court-ind" style="${singleCourt!==null?'display:inline':''}">Court ${singleCourt!==null?singleCourt+1:''} / 4</span>
       </div>
-      <div class="court-graphic-grid" style="grid-template-columns:repeat(${gridCols},1fr)">${courts}</div>
+      <div class="court-graphic-grid" style="grid-template-columns:repeat(${gridCols},1fr);${singleCourt!==null?'grid-template-rows:1fr':''}">${courts}</div>
     </div>`;
-  setTimeout(launchConfetti, 60);
+  // Cancel any running confetti from the previous card before launching fresh
+  document.querySelectorAll('.confetti-canvas').forEach(c => {
+    if(c._rafId){ cancelAnimationFrame(c._rafId); c._rafId = null; }
+  });
+  setTimeout(launchConfetti, 120);
+}
+
+function startInlineCycle(){
+  inlineCycleActive=true;
+  inlineCycleCourtIdx=0;
+  showRoundGraphic(obsRound,true,0);
+  inlineCycleTimer=setInterval(()=>{
+    inlineCycleCourtIdx=(inlineCycleCourtIdx+1)%4;
+    showRoundGraphic(obsRound,true,inlineCycleCourtIdx);
+  },3000);
+}
+
+function stopInlineCycle(){
+  inlineCycleActive=false;
+  clearInterval(inlineCycleTimer);
+  inlineCycleTimer=null;
+  showRoundGraphic(obsRound,true,null);
+}
+
+function toggleInlineCycle(){
+  if(inlineCycleActive) stopInlineCycle(); else startInlineCycle();
 }
 
 function courtSvgIcon(){
@@ -2937,6 +2977,7 @@ function closeGraphic() {
   document.querySelectorAll('.confetti-canvas').forEach(c => {
     if (c._rafId) { cancelAnimationFrame(c._rafId); c._rafId = null; }
   });
+  if(inlineCycleActive){ inlineCycleActive=false; clearInterval(inlineCycleTimer); inlineCycleTimer=null; }
   document.getElementById('graphic-overlay').classList.remove('show');
 }
 function closeGraphicOutside(e){
@@ -2947,7 +2988,10 @@ function closeGraphicOutside(e){
 function launchConfetti() {
   document.querySelectorAll('.confetti-canvas').forEach(canvas => {
     const ctx = canvas.getContext('2d');
-    const W = canvas.offsetWidth, H = canvas.offsetHeight;
+    const rect = canvas.getBoundingClientRect();
+    const W = Math.round(rect.width) || canvas.offsetWidth;
+    const H = Math.round(rect.height) || canvas.offsetHeight;
+    if(!W || !H) return; // skip if still not laid out
     canvas.width = W; canvas.height = H;
     const colours = ['#00d4ff','#7c3aed','#27ae60','#e8b43a','#ffffff','#f472b6'];
     const pieces = Array.from({length: 60}, () => ({
