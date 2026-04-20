@@ -23,22 +23,21 @@ body::before{content:'';position:fixed;inset:0;background-image:url('data:image/
 .nav-btn:disabled{opacity:0.2;cursor:default;}
 .round-label{font-family:'Bebas Neue',cursive;font-size:clamp(0.9rem,1.6vw,1.5rem);color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;}
 .grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:1%;flex:1;min-height:0;}
-.card{background:var(--slate);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;min-height:0;}
+.card{background:var(--slate);border:1px solid var(--border);border-radius:10px;overflow:visible;display:flex;flex-direction:column;min-height:0;}
 .card-hdr{background:var(--court);padding:1.5% 3%;display:flex;align-items:center;gap:0.5rem;flex-shrink:0;}
 .card-hdr span{font-family:'Bebas Neue',cursive;font-size:clamp(0.9rem,1.8vw,1.6rem);color:white;letter-spacing:0.05em;}
 .card-body{flex:1;display:flex;align-items:stretch;padding:2% 2% 3%;gap:2%;min-height:0;overflow:hidden;}
-.team{flex:1;display:flex;flex-direction:column;gap:3%;position:relative;}
+.team{flex:1;display:flex;flex-direction:column;gap:3%;justify-content:space-between;position:relative;}
 .team-label{font-family:'Bebas Neue',cursive;font-size:clamp(0.75rem,1.4vw,1.2rem);text-transform:uppercase;letter-spacing:0.12em;color:var(--muted);margin-bottom:4%;}
 .prow{display:flex;align-items:center;justify-content:space-between;gap:2%;background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:6px;padding:3% 4%;}
 .pname{font-size:clamp(0.6rem,1.1vw,1rem);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0;max-width:calc(100% - 3em);}
 .pname.absent{color:var(--muted);font-style:italic;}
 .pscore{font-family:'Bebas Neue',cursive;font-size:clamp(0.8rem,1.6vw,1.4rem);min-width:2.4em;width:2.4em;text-align:center;flex-shrink:0;color:var(--accent);}
 .vs{font-family:'Bebas Neue',cursive;font-size:clamp(0.9rem,1.8vw,1.6rem);color:var(--muted);display:flex;align-items:center;justify-content:center;align-self:center;flex-shrink:0;padding:0 1%;}
-/* total+pts row */
-.total-row{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding-top:3%;margin-top:auto;flex-shrink:0;}
+.total-row{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding-top:4%;margin-top:3%;}
 .total-lbl{font-size:clamp(0.5rem,0.8vw,0.75rem);text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);}
 .total-val{font-family:'Bebas Neue',cursive;font-size:clamp(0.85rem,1.5vw,1.3rem);}
-.pts{font-family:'Bebas Neue',cursive;font-size:clamp(1rem,2.2vw,2rem);line-height:1;text-align:right;}
+.pts{font-family:'Bebas Neue',cursive;font-size:clamp(1rem,2.2vw,2rem);text-align:right;line-height:1;margin-top:1%;}
 .pts span{font-size:0.55em;}
 .result{text-align:center;font-family:'Bebas Neue',cursive;font-size:clamp(1rem,2vw,1.7rem);letter-spacing:0.08em;border-top:1px solid var(--border);padding:2% 0 1%;margin-top:0;flex-shrink:0;position:relative;z-index:10;background:var(--slate);}
 .trophy{position:absolute;right:-4%;top:50%;transform:translateY(-50%);font-size:clamp(2.5rem,5vw,4.5rem);opacity:0.12;pointer-events:none;z-index:0;line-height:1;}
@@ -50,20 +49,14 @@ body::before{content:'';position:fixed;inset:0;background-image:url('data:image/
 .play-btn:hover{opacity:0.82;}
 .court-ind{font-family:'Bebas Neue',cursive;font-size:clamp(0.7rem,1.2vw,0.95rem);color:var(--accent);letter-spacing:0.1em;min-width:5.5em;text-align:center;display:none;}
 .grid.single{grid-template-columns:1fr;grid-template-rows:1fr;}
-.grid.single .card{border-radius:14px;overflow:hidden;display:flex;flex-direction:column;}
-.grid.single .card-hdr{padding:0.8% 2%;flex-shrink:0;}
+.grid.single .card{border-radius:14px;}
 .grid.single .card-hdr span{font-size:clamp(1.1rem,2.4vw,2rem);}
-.grid.single .card-body{padding:1% 1.5%;gap:1%;flex:1;min-height:0;overflow:hidden;}
-.grid.single .team{gap:2%;min-width:0;overflow:hidden;}
-.grid.single .prow{padding:4.5% 3%;overflow:hidden;min-width:0;}
-.grid.single .pname{font-size:clamp(1.6rem,3.5vw,3.2rem);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;}
-.grid.single .pscore{font-size:clamp(1.8rem,4vw,3.8rem);min-width:2em;width:2em;}
-.grid.single .total-row{padding-top:2%;margin-top:auto;}
-.grid.single .total-lbl{font-size:clamp(0.65rem,1.1vw,1rem);}
-.grid.single .total-val{font-size:clamp(1.2rem,2vw,1.8rem);}
-.grid.single .pts{font-size:clamp(1.2rem,2.5vw,2.2rem);}
-.grid.single .result{font-size:clamp(1.2rem,2.6vw,2.4rem);padding:0.6% 0;}
-.grid.single .team-label{font-size:clamp(1.2rem,2.4vw,2.2rem);margin-bottom:2%;}
+.grid.single .pname{font-size:clamp(0.8rem,1.6vw,1.4rem);}
+.grid.single .pscore{font-size:clamp(1rem,2vw,1.8rem);}
+.grid.single .pts{font-size:clamp(1.3rem,3vw,2.6rem);}
+.grid.single .result{font-size:clamp(1.2rem,2.6vw,2.2rem);}
+.grid.single .total-val{font-size:clamp(0.9rem,1.6vw,1.4rem);}
+.grid.single .team-label{font-size:clamp(0.9rem,1.7vw,1.5rem);}
 </style>
 </head>
 <body>
@@ -202,15 +195,12 @@ function renderGrid(r, data, singleCourt=null){
             ${prow(p2,exN2,exAb2,sc2,ab2,do2)}
           </div>
         </div>
-        <div class="total-row" style="margin-top:auto;flex-shrink:0">
-          <div>
-            <div class="total-lbl">Total${showX2?' ×2':''}</div>
-            <div class="total-val" style="color:${isWin?'var(--win)':bWin&&side==='Team A'||aWin&&side==='Team B'?'var(--lose)':'var(--text)'}">${filled?total:'—'}</div>
+        <div style="position:relative;z-index:5">
+          <div class="total-row">
+            <span class="total-lbl">Total${showX2?' ×2':''}</span>
+            <span class="total-val" style="color:${isWin?'var(--win)':bWin&&side==='Team A'||aWin&&side==='Team B'?'var(--lose)':'var(--text)'}">${filled?total:'—'}</span>
           </div>
-          <div>
-            <div class="total-lbl" style="text-align:right">Points</div>
-            <div class="pts" style="color:${tp!==null?tpC:'var(--muted)'}">${tp!==null?tp+' <span>PTS</span>':'—'}</div>
-          </div>
+          ${tp!==null?`<div class="pts" style="color:${tpC};position:relative;z-index:5">${tp} <span>PTS</span></div>`:''}
         </div>
       </div>`;
     const resultHtml=allFilled
