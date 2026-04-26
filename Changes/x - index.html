@@ -1,0 +1,3548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Americano — Smartphone Quiz Knights</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root {
+  --court: #2d7a3a;
+  --court-light: #3a9e4a;
+  --line: #f5f0e0;
+  --gold: #00d4ff;        /* cyan — brand primary accent */
+  --red: #c0392b;
+  --navy: #12062a;        /* deep violet-black */
+  --slate: #1c0f3a;       /* dark purple */
+  --text: #f0f0ff;
+  --muted: #8a87b0;
+  --card: #1a0e35;        /* rich dark purple card */
+  --card2: #220f40;
+  --accent: #00d4ff;      /* cyan */
+  --accent2: #7c3aed;     /* violet */
+  --win: #27ae60;
+  --lose: #c0392b;
+  --border: rgba(255,255,255,0.1);
+  --grad: linear-gradient(135deg, #00d4ff 0%, #7c3aed 50%, #5b21b6 100%);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--navy);
+  background-image:
+    radial-gradient(ellipse at top left, rgba(0,212,255,0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at bottom right, rgba(124,58,237,0.12) 0%, transparent 50%);
+  background-attachment: fixed;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url('data:image/jpeg;base64,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');
+  background-repeat: repeat;
+  background-position: 0 0;
+  background-size: 180px auto;
+  opacity: 0.04;
+  pointer-events: none;
+  z-index: 0;
+}
+.page, nav { position: relative; z-index: 1; }
+h1, h2, h3, .display { font-family: 'Bebas Neue', cursive; letter-spacing: 0.05em; }
+.grad-text {
+  background: var(--grad);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* NAV */
+.nav {
+  background: rgba(18,6,42,0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 2px solid transparent;
+  background-clip: padding-box;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  padding: 0 2rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+.nav::after {
+  content: '';
+  position: absolute;
+  bottom: -2px; left: 0; right: 0;
+  height: 2px;
+  background: var(--grad);
+}
+.nav-logo {
+  display: flex;
+  align-items: center;
+  padding: 0.45rem 0;
+  flex-shrink: 0;
+}
+.nav-logo-badge {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 0.4rem 1.1rem;
+  border: 2.5px solid rgba(255,255,255,0.85);
+  border-radius: 10px;
+  gap: 1px;
+  line-height: 1;
+}
+.nav-logo-main {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 1.7rem;
+  letter-spacing: 0.1em;
+  line-height: 1;
+  background: var(--grad);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.nav-logo-sub {
+  font-family: 'Rajdhani', 'DM Sans', sans-serif;
+  font-size: 0.5rem;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.65);
+  line-height: 1;
+}
+.nav-tabs { display:flex; gap:0; }
+.nav-tab {
+  padding: 0.75rem 1.2rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+  font-family: 'DM Sans', sans-serif;
+}
+.nav-tab:hover { color: var(--text); }
+.nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* PAGES */
+.page { display: none; padding: 2rem; max-width: 1400px; margin: 0 auto; }
+.page.active { display: block; }
+
+/* SETUP */
+.setup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+.panel {
+  background: var(--card);
+  border: 1px solid rgba(124,58,237,0.25);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+.panel h2 { font-size: 1.5rem; color: var(--accent); margin-bottom: 1rem; }
+.player-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.player-input {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.4rem 0.6rem;
+}
+.player-num {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 1.2rem;
+  color: var(--accent);
+  min-width: 1.5rem;
+}
+.player-input input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+  width: 100%;
+}
+.player-input input::placeholder { color: var(--muted); }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.btn-primary { background: var(--grad); color: #fff; border: none; }
+.btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-secondary { background: rgba(255,255,255,0.1); color: var(--text); border: 1px solid var(--border); }
+.btn-secondary:hover { background: rgba(255,255,255,0.15); }
+.btn-sm { padding: 0.4rem 0.9rem; font-size: 0.8rem; }
+
+/* SCHEDULE INFO */
+.schedule-info { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; margin-bottom: 1.5rem; }
+.stat-box {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem;
+  text-align: center;
+}
+.stat-box .num { font-family:'Bebas Neue',cursive; font-size:2.5rem; color:var(--accent); }
+.stat-box .lbl { font-size:0.75rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; }
+/* ROUND SELECTOR */
+.round-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+.round-btn {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-family: 'Bebas Neue', cursive;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center;
+}
+.round-btn:hover { border-color: var(--accent); color: var(--accent); }
+.round-btn.active { background: var(--accent); border-color: var(--accent); color: var(--navy); }
+.round-btn.complete { background: var(--win); border-color: var(--win); color: #fff; }
+
+/* COURTS */
+.courts-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 1.5rem; }
+
+.court-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: visible;
+}
+.court-header {
+  background: var(--court);
+  padding: 0.6rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.court-label {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 1.3rem;
+  color: white;
+}
+.court-body { padding: 1rem; }
+
+/* Match row inside court */
+.match-teams { display: grid; grid-template-columns: 1fr auto 1fr; gap: 0.75rem; align-items: stretch; margin-bottom: 0.75rem; }
+.team-col { display: flex; flex-direction: column; gap: 0.4rem; }
+.team-side-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.player-badge {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.player-input.is-ghost {
+  border-color: rgba(138,155,176,0.4);
+  background: rgba(138,155,176,0.06);
+}
+.ghost-toggle {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  padding: 2px 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.ghost-toggle:hover { border-color: var(--muted); }
+.ghost-toggle.active { background: rgba(138,155,176,0.2); border-color: var(--muted); color: var(--text); }
+.vs-label { font-family:'Bebas Neue',cursive; font-size:1.4rem; color: var(--muted); text-align:center; display:flex; align-items:center; justify-content:center; }
+
+/* Score input */
+.score-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 0.75rem; align-items: center; }
+.score-input-wrap { display: flex; flex-direction: column; gap: 0.3rem; }
+.score-individual { display: flex; gap: 0.4rem; }
+.score-individual input {
+  width: 48px;
+  text-align: center;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.4rem;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.score-individual input:focus { border-color: var(--accent); }
+.score-individual input::placeholder { color: var(--muted); font-size: 0.8rem; }
+.score-label { font-size: 0.7rem; color: var(--muted); text-align: center; }
+.team-total {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 2rem;
+  text-align: center;
+  color: var(--accent);
+  line-height: 1;
+}
+.team-total.win { color: var(--win); }
+.team-total.lose { color: var(--lose); }
+.vs-divider { font-family:'Bebas Neue',cursive; font-size:1.2rem; color:var(--muted); text-align:center; }
+
+/* Bye indicator */
+.bye-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.bye-badge {
+  background: rgba(255,255,255,0.07);
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-family: 'Bebas Neue', cursive;
+  font-size: 1.2rem;
+  color: var(--muted);
+}
+
+/* LEADERBOARD */
+  height: min(100vh, calc(100vw * 9/16));
+  background: linear-gradient(var(--navy), var(--navy)) padding-box, var(--grad) border-box;
+  border: 3px solid transparent;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* LEADERBOARD */
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.leaderboard-table th {
+  background: var(--slate);
+  color: var(--muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.6rem 0.8rem;
+  text-align: left;
+  font-weight: 600;
+}
+.leaderboard-table th:not(:first-child) { text-align: center; }
+.leaderboard-table td { padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--border); }
+.leaderboard-table td:not(:first-child) { text-align: center; }
+.leaderboard-table tr:hover td { background: rgba(255,255,255,0.03); }
+.rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  font-family: 'Bebas Neue', cursive;
+  font-size: 1rem;
+}
+.rank-1 { background: linear-gradient(135deg,#00d4ff,#7c3aed); color: #fff; }
+.rank-2 { background: #a8a9ad; color: var(--navy); }
+.rank-3 { background: #ad7b4b; color: var(--navy); }
+.rank-n { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+
+/* Progress bar */
+.prog-bar { background: rgba(255,255,255,0.1); border-radius: 99px; height: 6px; overflow: hidden; }
+.prog-fill { background: var(--grad); height: 100%; border-radius: 99px; transition: width 0.4s; }
+
+/* Alert */
+.alert {
+  background: rgba(0,212,255,0.08);
+  border: 1px solid rgba(0,212,255,0.3);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  color: var(--accent);
+}
+
+/* FIXTURES MATRIX */
+.matrix-wrap {
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: calc(100vh - 220px);
+}
+.matrix-table {
+  border-collapse: collapse;
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+.matrix-table th, .matrix-table td {
+  border: 1px solid rgba(255,255,255,0.07);
+  padding: 0;
+}
+.matrix-corner {
+  background: var(--navy);
+  min-width: 110px;
+  width: 110px;
+}
+.matrix-col-header {
+  background: var(--slate);
+  text-align: center;
+  vertical-align: bottom;
+  padding: 0.3rem 0.2rem;
+  min-width: 36px;
+  width: 36px;
+  max-width: 36px;
+}
+.matrix-col-header div {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text);
+  max-height: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.matrix-row-header {
+  background: var(--slate);
+  padding: 0.25rem 0.5rem;
+  font-weight: 600;
+  font-size: 0.78rem;
+  color: var(--text);
+  min-width: 110px;
+  width: 110px;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+}
+.matrix-row-header span {
+  font-size: 0.65rem;
+  color: var(--muted);
+  margin-right: 4px;
+}
+.matrix-cell {
+  text-align: center;
+  vertical-align: middle;
+  min-width: 36px;
+  width: 36px;
+  height: 34px;
+  cursor: default;
+  transition: filter 0.1s;
+}
+.matrix-cell:hover { filter: brightness(1.3); }
+/* self — diagonal */
+.mc-self { background: rgba(255,255,255,0.04); }
+/* not yet played */
+.mc-none-vs  { background: rgba(255,255,255,0.03); color: var(--muted); }
+.mc-none-w   { background: rgba(255,255,255,0.03); color: var(--muted); }
+/* played exactly once — good */
+.mc-once-vs  { background: rgba(39,174,96,0.22);  color: #5dbb82; font-weight:700; }
+.mc-once-w   { background: rgba(79,195,247,0.18); color: #7acfe8; font-weight:700; }
+/* played more than once — flag */
+.mc-multi-vs { background: rgba(0,212,255,0.15); color: var(--accent); font-weight:700; }
+.mc-multi-w  { background: rgba(192,57,43,0.28);  color: #e07060; font-weight:700; }
+
+.fixtures-legend {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+  font-size: 0.8rem;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.legend-swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.fixtures-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 1.2rem;
+}
+.fixtures-tab {
+  padding: 0.55rem 1.2rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+}
+.fixtures-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.fixtures-panel { display: none; }
+.fixtures-panel.active { display: block; }
+/* EXTRA PLAYERS */
+.extra-player-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto 1fr;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+.extra-player-row label { font-size:0.78rem; color:var(--muted); white-space:nowrap; }
+.extra-player-row input[type="text"] {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.45rem 0.6rem;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+  outline: none;
+  width: 100%;
+}
+.extra-player-row input[type="text"]:focus { border-color: var(--accent); }
+.extra-player-row select {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.45rem 0.5rem;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem;
+  outline: none;
+  width: 100%;
+  cursor: pointer;
+}
+.extra-player-row select:focus { border-color: var(--accent); }
+.extra-slot-num {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 1rem;
+  color: var(--accent);
+  min-width: 1.2rem;
+  text-align: center;
+}
+
+/* DROP OUTS TABLE */
+.dropout-wrap { overflow-x: auto; }
+.dropout-table {
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  min-width: 100%;
+}
+.dropout-table th, .dropout-table td {
+  border: 1px solid var(--border);
+  padding: 0;
+}
+.dropout-player-header {
+  background: var(--slate);
+  padding: 0.4rem 0.75rem;
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--text);
+  white-space: nowrap;
+  text-align: left;
+  min-width: 160px;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+}
+.dropout-player-header span {
+  color: var(--muted);
+  font-size: 0.65rem;
+  margin-right: 4px;
+  font-family: 'Bebas Neue', cursive;
+}
+.dropout-round-header {
+  background: var(--slate);
+  text-align: center;
+  padding: 0.3rem 0.25rem;
+  font-size: 0.7rem;
+  color: var(--muted);
+  font-family: 'Bebas Neue', cursive;
+  min-width: 38px;
+  width: 38px;
+}
+.dropout-round-header.complete { color: var(--win); }
+.dropout-name-cell {
+  background: var(--card);
+  padding: 0.3rem 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  white-space: nowrap;
+  position: sticky;
+  left: 0;
+  z-index: 1;
+}
+.dropout-name-cell.is-ghost { color: var(--muted); font-style: italic; }
+.dropout-cell {
+  text-align: center;
+  vertical-align: middle;
+  width: 38px;
+  min-width: 38px;
+  height: 34px;
+  cursor: pointer;
+  transition: background 0.12s;
+  background: var(--card);
+}
+.dropout-cell:hover { background: rgba(255,255,255,0.05); }
+.dropout-cell.is-out { background: rgba(192,57,43,0.25); color: var(--lose); }
+.dropout-cell.is-ghost-slot { background: rgba(255,255,255,0.03); cursor: default; }
+.dropout-legend { display:flex; gap:1.5rem; flex-wrap:wrap; margin-bottom:1rem; font-size:0.8rem; align-items:center; }
+.dropout-legend-item { display:flex; align-items:center; gap:0.4rem; }
+.dropout-legend-swatch { width:18px;height:18px;border-radius:4px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:0.7rem; }
+
+/* SCORE SHEET */
+.ss-round-bar { display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; margin-bottom:1.5rem; }
+.ss-list {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  max-width: 100%;
+}
+.ss-list-header {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr 90px 7rem 1fr 1fr;
+  padding: 0.5rem 1rem;
+  background: var(--slate);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  font-weight: 600;
+}
+.ss-list-row {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr 90px 7rem 1fr 1fr;
+  align-items: center;
+  padding: 0.4rem 1rem;
+  border-top: 1px solid var(--border);
+  transition: background 0.12s;
+}
+.ss-list-row:hover { background: rgba(255,255,255,0.03); }
+.ss-partner-badge {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--accent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 0.5rem;
+}
+.ss-opponent-badge {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 0.5rem;
+}
+.ss-list-row:hover { background: rgba(255,255,255,0.03); }
+.ss-num {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 1.1rem;
+  color: var(--muted);
+}
+.ss-name {
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+.ss-score-input {
+  width: 68px;
+  text-align: center;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.4rem 0.3rem;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+.ss-score-input:focus { border-color: var(--accent); background: rgba(0,212,255,0.06); }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .setup-grid { grid-template-columns: 1fr; }
+  .courts-grid { grid-template-columns: 1fr; }
+  .player-grid { grid-template-columns: 1fr; }
+  .ss-list { max-width: 100%; overflow-x: auto; }
+  .ss-list-header, .ss-list-row { grid-template-columns: 2rem 1fr 70px 1rem minmax(100px,1fr) minmax(100px,1fr); font-size: 0.7rem; }
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo">
+    <div class="nav-logo-badge">
+      <span class="nav-logo-main">AMERICANO</span>
+      <span class="nav-logo-sub">Smartphone Quiz Knights</span>
+    </div>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('setup')">Setup</button>
+    <button class="nav-tab" onclick="showPage('scoresheet')">Score Sheet</button>
+    <button class="nav-tab" onclick="showPage('play')">Play</button>
+    <button class="nav-tab" onclick="showPage('dropouts')">Drop Outs</button>
+    <button class="nav-tab" onclick="showPage('fixtures')">Fixtures</button>
+    <button class="nav-tab" onclick="if(event.ctrlKey||event.metaKey){window.open('leaderboard.html','_blank')}else{showPage('leaderboard')}" title="Ctrl+click to open live leaderboard in a new window">Leaderboard <span style="font-size:0.6rem;opacity:0.45;letter-spacing:0.03em">↗</span></button>
+  </div>
+</nav>
+
+<!-- ===== SETUP PAGE ===== -->
+<div id="page-setup" class="page active">
+  <div style="margin-bottom:1.5rem">
+    <h1 class="grad-text" style="font-size:2.5rem">Tournament Setup</h1>
+    <p style="color:var(--muted);margin-top:0.25rem" id="setup-subtitle">16 players · 15 rounds · 4 courts · Round Robin doubles</p>
+  </div>
+
+  <div class="setup-grid">
+    <div class="panel">
+      <h2>Player Names</h2>
+      <div class="player-grid" id="player-inputs"></div>
+
+      <h2 style="margin-top:1.5rem">Extra Players</h2>
+      <p style="color:var(--muted);font-size:0.82rem;margin-bottom:1rem">Up to 4 extra players who pair with one of the 16. Their two scores are averaged (rounded down) to produce a single slot score. Ghost players are disabled when extras are active.</p>
+      <div id="extra-player-inputs"></div>
+    </div>
+    <div class="panel">
+      <h2>Tournament Info</h2>
+
+      <div class="schedule-info">
+        <div class="stat-box"><div class="num" id="stat-players">16</div><div class="lbl">Players</div></div>
+        <div class="stat-box"><div class="num" id="stat-rounds">15</div><div class="lbl">Rounds</div></div>
+        <div class="stat-box"><div class="num" id="stat-courts">4</div><div class="lbl">Courts</div></div>
+      </div>
+
+      <div style="margin:1rem 0;">
+        <div style="display:flex;align-items:flex-start;gap:2rem;flex-wrap:wrap;margin-bottom:0.6rem">
+          <div>
+            <label style="font-size:0.8rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);font-weight:600;display:block;margin-bottom:0.5rem">Questions per player per set</label>
+            <input type="number" id="num-questions" min="1" max="100" value="10"
+              oninput="updateQuestionInfo()"
+              style="width:80px;text-align:center;background:rgba(255,255,255,0.07);border:1px solid var(--border);border-radius:8px;padding:0.5rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:1.1rem;font-weight:600;outline:none;">
+          </div>
+          <div>
+            <label style="font-size:0.8rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);font-weight:600;display:block;margin-bottom:0.5rem">Points per question</label>
+            <input type="number" id="num-ppq" min="1" max="100" value="1"
+              oninput="updateQuestionInfo()"
+              style="width:80px;text-align:center;background:rgba(255,255,255,0.07);border:1px solid var(--border);border-radius:8px;padding:0.5rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:1.1rem;font-weight:600;outline:none;">
+          </div>
+          <div>
+            <label style="font-size:0.8rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);font-weight:600;display:block;margin-bottom:0.5rem">Max Score Override</label>
+            <div style="display:flex;align-items:center;gap:0.5rem">
+              <input type="number" id="num-questions-override" min="1" max="999" placeholder="—"
+                oninput="updateOverride()"
+                style="width:80px;text-align:center;background:rgba(255,255,255,0.07);border:1px solid var(--border);border-radius:8px;padding:0.5rem;color:var(--accent);font-family:'DM Sans',sans-serif;font-size:1.1rem;font-weight:600;outline:none;">
+              <span style="font-size:0.8rem;color:var(--muted);line-height:1.4">If set, replaces<br>Q × PPQ<br>for pts calculation</span>
+            </div>
+          </div>
+        </div>
+        <div id="question-info" style="font-size:0.85rem;color:var(--muted);line-height:1.7"></div>
+      </div>
+      <div style="margin-bottom:0.5rem">
+        <div class="prog-bar" style="margin-bottom:0.5rem">
+          <div class="prog-fill" id="setup-progress" style="width:0%"></div>
+        </div>
+        <p id="setup-progress-label" style="font-size:0.8rem;color:var(--muted)">0 / 16 names entered</p>
+      </div>
+      <div style="display:flex;gap:0.75rem;margin-top:1.5rem;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="fillDefaults()">Use Default Names</button>
+        <button class="btn btn-primary" onclick="generateTournament()">▶ Generate Tournament</button>
+        <button class="btn btn-secondary btn-sm" onclick="fillDummyScores()">🎲 Fill Dummy Scores</button>
+        <button class="btn btn-secondary btn-sm" onclick="resetAll()">Reset All</button>
+        <button class="btn btn-secondary btn-sm" onclick="showScoringExplainer()">📖 Scores Explained</button>
+      </div>
+      <div id="setup-alert" class="alert" style="display:none;margin-top:1rem"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PLAY PAGE ===== -->
+<div id="page-play" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem">
+    <div>
+      <h1 class="grad-text" style="font-size:2.5rem">Match Play</h1>
+      <p style="color:var(--muted);margin-top:0.25rem" id="play-subtitle">Select a round to begin</p>
+    </div>
+    <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
+      <button class="btn btn-secondary btn-sm" onclick="exportFixtures()">⬇ Export Fixtures</button>
+      <label class="btn btn-secondary btn-sm" style="cursor:pointer;margin:0">⬆ Import Fixtures<input type="file" accept=".xlsx" style="display:none" onchange="importFixtures(this)"></label>
+      <button class="btn btn-secondary btn-sm" onclick="downloadRoundImage(currentRound)">📸 Save Round</button>
+      <button class="btn btn-secondary btn-sm" onclick="if(tournamentGenerated) window.open('obs_overlay.html','_blank')">📺 OBS <span style="font-size:0.6rem;opacity:0.45;letter-spacing:0.03em">↗</span></button>
+    </div>
+  </div>
+
+  <div id="play-alert" class="alert" style="display:none;margin-bottom:1rem"></div>
+  <div class="round-bar" id="round-bar"></div>
+  <div id="play-content"></div>
+</div>
+
+<!-- ===== SCORE SHEET PAGE ===== -->
+<div id="page-scoresheet" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem">
+    <div>
+      <h1 class="grad-text" style="font-size:2.5rem">Score Sheet</h1>
+      <p style="color:var(--muted);margin-top:0.25rem" id="ss-subtitle">Enter each player's score for the selected round</p>
+    </div>
+    <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
+      <button class="btn btn-secondary btn-sm" onclick="ssExport()">⬇ Export Scores</button>
+      <label class="btn btn-secondary btn-sm" style="cursor:pointer;margin:0">⬆ Import Scores<input type="file" accept=".xlsx,.csv" style="display:none" onchange="ssImport(this)"></label>
+      <button class="btn btn-secondary btn-sm" onclick="ssClearRound()">Clear Round</button>
+      <button class="btn btn-primary btn-sm" onclick="showPage('play')">View Courts →</button>
+    </div>
+  </div>
+  <div id="ss-alert" class="alert" style="display:none;margin-bottom:1rem"></div>
+  <div class="ss-round-bar" id="ss-round-bar"></div>
+  <div id="ss-content"></div>
+</div>
+
+<!-- ===== LEADERBOARD PAGE ===== -->
+<div id="page-leaderboard" class="page">
+  <div style="margin-bottom:1.5rem">
+    <h1 class="grad-text" style="font-size:2.5rem">Leaderboards</h1>
+  </div>
+
+  <!-- Tab switcher -->
+  <div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:1.5rem">
+    <button id="lb-tab-1" onclick="showLbTab(1)"
+      style="padding:0.6rem 1.4rem;font-size:0.85rem;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;cursor:pointer;border:none;background:transparent;color:var(--accent);border-bottom:2px solid var(--accent);margin-bottom:-2px;font-family:'DM Sans',sans-serif">
+      Main Standings
+    </button>
+    <button id="lb-tab-2" onclick="showLbTab(2)"
+      style="padding:0.6rem 1.4rem;font-size:0.85rem;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;cursor:pointer;border:none;background:transparent;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;font-family:'DM Sans',sans-serif">
+      Individual Stats
+    </button>
+    <button id="lb-tab-3" onclick="showLbTab(3)"
+      style="padding:0.6rem 1.4rem;font-size:0.85rem;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;cursor:pointer;border:none;background:transparent;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;font-family:'DM Sans',sans-serif">
+      Team Stats
+    </button>
+  </div>
+
+  <!-- LB 1: Main — team points (win/difference based) -->
+  <div id="lb-panel-1">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;gap:1rem;flex-wrap:wrap">
+      <p style="color:var(--muted);font-size:0.85rem;margin:0" id="lb1-desc"></p>
+      <button class="btn btn-secondary btn-sm" onclick="exportLbImage(1)" title="Export as image for sharing">📸 Share Image</button>
+    </div>
+    <div class="panel" style="padding:0;overflow:hidden">
+      <table class="leaderboard-table">
+        <thead><tr>
+          <th style="width:44px">#</th>
+          <th>Player</th>
+          <th title="Sets played">P</th>
+          <th title="Wins">W</th>
+          <th title="Losses">L</th>
+          <th title="Draws">D</th>
+          <th title="Not played (dropped out)">N/P</th>
+          <th title="Tournament points earned">T.Pts</th>
+          <th title="Points difference (team score for vs against)">+/-</th>
+          <th title="Individual questions correct (combined with extra used for tiebreaking only)">Indiv</th>
+        </tr></thead>
+        <tbody id="lb1-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- LB 2: Individual raw scores -->
+  <div id="lb-panel-2" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;gap:1rem;flex-wrap:wrap">
+      <p style="color:var(--muted);font-size:0.85rem;margin:0" id="lb2-desc"></p>
+      <button class="btn btn-secondary btn-sm" onclick="exportLbImage(2)" title="Export as image for sharing">📸 Share Image</button>
+    </div>
+    <div class="panel" style="padding:0;overflow:hidden">
+      <table class="leaderboard-table">
+        <thead><tr>
+          <th style="width:44px">#</th>
+          <th>Player</th>
+          <th title="Sets played">P</th>
+          <th title="Wins">W</th>
+          <th title="Losses">L</th>
+          <th title="Not played (dropped out)">N/P</th>
+          <th title="Total individual questions correct">Score</th>
+          <th title="Max possible score">Max</th>
+          <th title="Score percentage">%</th>
+        </tr></thead>
+        <tbody id="lb2-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- LB 3: Team Stats (combined side score per match) -->
+  <div id="lb-panel-3" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;gap:1rem;flex-wrap:wrap">
+      <p style="color:var(--muted);font-size:0.85rem;margin:0" id="lb3-desc"></p>
+      <button class="btn btn-secondary btn-sm" onclick="exportLbImage(3)" title="Export as image for sharing">&#128247; Share Image</button>
+    </div>
+    <div class="panel" style="padding:0;overflow:hidden">
+      <table class="leaderboard-table">
+        <thead><tr>
+          <th style="width:44px">#</th>
+          <th>Player</th>
+          <th title="Sets played">P</th>
+          <th title="Wins">W</th>
+          <th title="Losses">L</th>
+          <th title="Draws">D</th>
+          <th title="Not played (dropped out)">N/P</th>
+          <th title="Team points: combined score of both teams on your court each set">Team Pts</th>
+          <th title="Individual questions correct (tiebreaker)">Indiv</th>
+        </tr></thead>
+        <tbody id="lb3-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FIXTURES PAGE ===== -->
+<div id="page-fixtures" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.2rem">
+    <div>
+      <h1 class="grad-text" style="font-size:2.5rem">Fixture Matrix</h1>
+      <p style="color:var(--muted);margin-top:0.25rem" id="fixtures-subtitle">Shows how many times each pair has played against or alongside each other</p>
+    </div>
+  </div>
+
+  <div class="fixtures-tabs">
+    <button class="fixtures-tab active" id="ftab-vs"  onclick="showFixturesTab('vs')">Played Against</button>
+    <button class="fixtures-tab"        id="ftab-with" onclick="showFixturesTab('with')">Played With</button>
+  </div>
+
+  <div class="fixtures-legend">
+    <span style="font-size:0.75rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.07em">Key:</span>
+    <div class="legend-item"><div class="legend-swatch" style="background:rgba(39,174,96,0.22)"></div><span>Once ✓</span></div>
+    <div class="legend-item"><div class="legend-swatch" style="background:rgba(0,212,255,0.3)"></div><span>More than once (vs)</span></div>
+    <div class="legend-item"><div class="legend-swatch" style="background:rgba(192,57,43,0.28)"></div><span>More than once (with)</span></div>
+    <div class="legend-item"><div class="legend-swatch" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1)"></div><span>Not yet played</span></div>
+    <div class="legend-item"><div class="legend-swatch" style="background:rgba(255,255,255,0.04)"></div><span>Same player</span></div>
+  </div>
+
+  <div class="fixtures-panel active" id="fpanel-vs">
+    <div class="matrix-wrap" id="matrix-vs"></div>
+  </div>
+  <div class="fixtures-panel" id="fpanel-with">
+    <div class="matrix-wrap" id="matrix-with"></div>
+  </div>
+</div>
+
+<!-- ===== DROP OUTS PAGE ===== -->
+<div id="page-dropouts" class="page">
+  <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.2rem">
+    <div>
+      <h1 class="grad-text" style="font-size:2.5rem">Drop Outs</h1>
+      <p style="color:var(--muted);margin-top:0.25rem">Mark players unavailable for specific rounds. Their partner's score will be doubled for that round.</p>
+    </div>
+  </div>
+  <div id="dropouts-content"></div>
+</div>
+
+<!-- ===== ROUND GRAPHIC OVERLAY ===== -->
+
+<script>
+// ===================== DATA =====================
+let players = ['RumHam','667','LemonHeads','QuiztianoKnowitAll','Jencanto',
+               "Em's a Power Ranger","I Don't Know Any Stevie Wonder",'Smarty Pints',
+               'The Walkers','Suzie Q','Boom Not Cheating Mum',
+               "It's a Trivial Travesty",'Lemurs In Lincolnshire',
+               'The Buckshaw Beast','Titanic Swim Team','KitKat'];
+let ghosts = Array(16).fill(false);
+// dropouts[playerIndex][round] = true means player didn't show for that round
+let dropouts = Array.from({length:16}, () => Array(15).fill(false));
+// extras: up to 4 extra players, each paired with one of the 16 base players
+// extras[i] = { name: string, baseIndex: number (0-15) | null } or null if slot unused
+let extras = [null, null, null, null];
+let schedule = [];
+let scores = {};
+let currentRound = 0;
+let tournamentGenerated = false;
+let numQuestions = 10;
+let pointsPerQuestion = 1; // multiplier: each correct answer = this many points
+let numQuestionsOverride = null; // if set, used instead of numQuestions for pts calculation
+
+// ===================== INIT =====================
+function init() {
+  buildPlayerInputs();
+  buildExtraPlayerInputs();
+  loadState();
+  updateQuestionInfo();
+  if (tournamentGenerated) renderPlayPage();
+}
+
+function updateOverride() {
+  const v = parseInt(document.getElementById('num-questions-override').value);
+  numQuestionsOverride = (!isNaN(v) && v > 0) ? v : null;
+  saveState();
+  updateQuestionInfo();
+}
+
+function updateQuestionInfo() {
+  const n = parseInt(document.getElementById('num-questions').value) || 10;
+  const ppq = parseInt(document.getElementById('num-ppq').value) || 1;
+  numQuestions = n;
+  pointsPerQuestion = ppq;
+  const { max, base } = effectivePot();
+  const overrideActive = numQuestionsOverride != null;
+  const indivMax = n * ppq;
+  document.getElementById('question-info').innerHTML =
+    (overrideActive ? `<span style="color:var(--accent);font-weight:600">Override active: pot = ${max}, base = ${base}</span><br>` : '') +
+    `Max individual score: <strong style="color:var(--text)">${indivMax}</strong> &nbsp;·&nbsp; ` +
+    `Max team score: <strong style="color:var(--text)">${indivMax*2}</strong> &nbsp;·&nbsp; ` +
+    `Total pts pot per set: <strong style="color:var(--text)">${max}</strong><br>` +
+    `Winning team scores: <strong style="color:var(--win)">${base} + difference</strong> &nbsp;·&nbsp; ` +
+    `Losing team: <strong style="color:var(--lose)">${base} − difference</strong> &nbsp;·&nbsp; ` +
+    `Draw: both get <strong style="color:var(--accent)">${base}</strong>`;
+  saveState();
+}
+
+function buildPlayerInputs() {
+  const g = document.getElementById('player-inputs');
+  g.innerHTML = '';
+  for (let i = 0; i < 16; i++) {
+    const isGhost = ghosts[i];
+    const hasExtras = extras.some(e => e !== null);
+    const d = document.createElement('div');
+    d.className = 'player-input' + (isGhost ? ' is-ghost' : '');
+    d.id = `player-row-${i}`;
+    d.innerHTML = `<span class="player-num">${i+1}</span>
+      <input type="text" placeholder="${isGhost ? 'Ghost' : 'Player '+(i+1)}" id="p${i}"
+        value="${isGhost ? 'Ghost' : (players[i]||'')}"
+        ${isGhost ? 'disabled style="color:var(--muted);font-style:italic"' : ''}
+        oninput="updatePlayer(${i}, this.value)" maxlength="30">
+      <button class="ghost-toggle${isGhost?' active':''}" onclick="toggleGhost(${i})"
+        title="${hasExtras ? 'Ghost unavailable when extra players are active' : 'Mark as ghost player'}"
+        ${hasExtras ? 'disabled style="opacity:0.3;cursor:not-allowed"' : ''}>👻</button>`;
+    g.appendChild(d);
+  }
+  updateSetupProgress();
+}
+
+function buildExtraPlayerInputs() {
+  const container = document.getElementById('extra-player-inputs');
+  container.innerHTML = '';
+  // Build list of base indices currently taken by other extras
+  const usedBases = extras.map(e => e ? e.baseIndex : null);
+  for (let i = 0; i < 4; i++) {
+    const ex = extras[i];
+    const row = document.createElement('div');
+    row.className = 'extra-player-row';
+    // Build dropdown options
+    const opts = `<option value="">— none —</option>` +
+      players.map((p, pi) => {
+        const takenByOther = usedBases.some((b, bi) => b === pi && bi !== i);
+        const isGhostSlot = ghosts[pi];
+        return `<option value="${pi}" ${ex && ex.baseIndex===pi ? 'selected' : ''} ${takenByOther||isGhostSlot ? 'disabled' : ''}>${pi+1}. ${p||'Player '+(pi+1)}${isGhostSlot?' (ghost)':''}</option>`;
+      }).join('');
+    row.innerHTML = `
+      <span class="extra-slot-num">E${i+1}</span>
+      <input type="text" placeholder="Extra player name" maxlength="30"
+        value="${ex ? ex.name : ''}"
+        id="extra-name-${i}"
+        oninput="updateExtra(${i},'name',this.value)"
+        onblur="updateExtra(${i},'name',this.value)">
+      <label>pairs with</label>
+      <select onchange="updateExtra(${i},'base',this.value)">
+        ${opts}
+      </select>`;
+    container.appendChild(row);
+  }
+}
+
+function updateExtra(slotIdx, field, value) {
+  if (field === 'name') {
+    // Just update the data — don't rebuild the inputs (would lose focus)
+    if (!extras[slotIdx]) extras[slotIdx] = { name: '', baseIndex: null };
+    extras[slotIdx].name = value; // keep raw value including spaces while typing
+    saveState();
+  } else {
+    const baseIdx = value === '' ? null : parseInt(value);
+    if (baseIdx === null) {
+      if (extras[slotIdx] && !extras[slotIdx].name) extras[slotIdx] = null;
+      else if (extras[slotIdx]) extras[slotIdx].baseIndex = null;
+    } else {
+      if (!extras[slotIdx]) extras[slotIdx] = { name: '', baseIndex: null };
+      extras[slotIdx].baseIndex = baseIdx;
+    }
+    // Disable ghosts when any extras are active
+    const hasExtras = extras.some(e => e !== null && e.baseIndex !== null);
+    if (hasExtras) {
+      const ghostIdx = ghosts.findIndex(g => g);
+      if (ghostIdx !== -1) { ghosts[ghostIdx] = false; players[ghostIdx] = ''; }
+    }
+    rebuildDropoutsForExtras();
+    saveState();
+    buildPlayerInputs();
+    buildExtraPlayerInputs(); // only rebuild on dropdown change, not name typing
+  }
+}
+
+// Ensure dropouts array has entries for all active extra players (indices 16-19)
+function rebuildDropoutsForExtras() {
+  // Ensure we have 20 slots (16 base + 4 extras), initialising new ones
+  while (dropouts.length < 20) dropouts.push(Array(15).fill(false));
+}
+
+
+function toggleGhost(i) {
+  if (!ghosts[i]) {
+    const existing = ghosts.findIndex(g => g);
+    if (existing !== -1 && existing !== i) {
+      if (!confirm(`Player ${existing+1} (${players[existing]}) is already the ghost. Replace with Player ${i+1}?`)) return;
+      ghosts[existing] = false;
+      players[existing] = '';
+    }
+  }
+  ghosts[i] = !ghosts[i];
+  players[i] = ghosts[i] ? 'Ghost' : '';
+  buildPlayerInputs();
+  saveState();
+}
+
+function updatePlayer(i, val) {
+  players[i] = val.trim();
+  updateSetupProgress();
+  saveState();
+}
+
+function updateSetupProgress() {
+  const filled = players.filter((p,i) => p || ghosts[i]).length;
+  document.getElementById('setup-progress').style.width = (filled/16*100)+'%';
+  const ghostCount = ghosts.filter(Boolean).length;
+  const suffix = ghostCount > 0 ? ` (${ghostCount} ghost${ghostCount>1?'s':''})` : '';
+  document.getElementById('setup-progress-label').textContent = `${filled} / 16 names entered${suffix}`;
+}
+
+function fillDefaults() {
+  const defaults = ['RumHam','667','LemonHeads','QuiztianoKnowitAll','Jencanto',
+                    "Em's a Power Ranger","I Don't Know Any Stevie Wonder",'Smarty Pints',
+                    'The Walkers','Suzie Q','Boom Not Cheating Mum',
+                    "It's a Trivial Travesty",'Lemurs In Lincolnshire',
+                    'The Buckshaw Beast','Titanic Swim Team','KitKat'];
+  for (let i = 0; i < 16; i++) {
+    players[i] = defaults[i];
+    ghosts[i] = false;
+  }
+  buildPlayerInputs();
+  saveState();
+}
+
+// ===================== SCHEDULE GENERATION =====================
+function generateTournament() {
+  const empty = players.findIndex((p,i) => !p && !ghosts[i]);
+  if (empty !== -1) {
+    const a = document.getElementById('setup-alert');
+    a.textContent = `Player ${empty+1} has no name. Please fill all 16 names (or use Default Names).`;
+    a.style.display = 'block';
+    setTimeout(()=>a.style.display='none', 4000);
+    return;
+  }
+  document.getElementById('setup-alert').style.display='none';
+  numQuestions = parseInt(document.getElementById('num-questions').value) || 10;
+
+  schedule = buildSchedule16();
+  scores = {};
+  for(let r=0;r<15;r++){
+    scores[r]={};
+    for(let c=0;c<4;c++) scores[r][c]={a1:'',a2:'',b1:'',b2:''};
+  }
+  tournamentGenerated = true;
+  currentRound = 0;
+  saveState();
+  showPage('play');
+  renderPlayPage();
+}
+
+function buildSchedule16() {
+  // Mathematically perfect W(16) Whist Tournament schedule.
+  // Every player partners every other player EXACTLY ONCE across 15 rounds.
+  // Every player opposes every other player EXACTLY TWICE across 15 rounds.
+  // Generated from the verified starter: T0=[15,0;1,2], T1=[3,6;9,11], T2=[4,13;8,12], T3=[5,10;7,14]
+  // using cyclic rotation in Z15 with court shuffles applied for variety.
+  return [
+    [ // Round 1
+      { teamA:[15,0], teamB:[1,2] },
+      { teamA:[3,6], teamB:[9,11] },
+      { teamA:[4,13], teamB:[8,12] },
+      { teamA:[5,10], teamB:[7,14] }
+    ],
+    [ // Round 2
+      { teamA:[6,11], teamB:[8,0] },
+      { teamA:[15,1], teamB:[2,3] },
+      { teamA:[4,7], teamB:[10,12] },
+      { teamA:[5,14], teamB:[9,13] }
+    ],
+    [ // Round 3
+      { teamA:[6,0], teamB:[10,14] },
+      { teamA:[7,12], teamB:[9,1] },
+      { teamA:[15,2], teamB:[3,4] },
+      { teamA:[5,8], teamB:[11,13] }
+    ],
+    [ // Round 4
+      { teamA:[6,9], teamB:[12,14] },
+      { teamA:[7,1], teamB:[11,0] },
+      { teamA:[8,13], teamB:[10,2] },
+      { teamA:[15,3], teamB:[4,5] }
+    ],
+    [ // Round 5
+      { teamA:[8,2], teamB:[12,1] },
+      { teamA:[15,4], teamB:[5,6] },
+      { teamA:[9,14], teamB:[11,3] },
+      { teamA:[7,10], teamB:[13,0] }
+    ],
+    [ // Round 6
+      { teamA:[8,11], teamB:[14,1] },
+      { teamA:[10,0], teamB:[12,4] },
+      { teamA:[15,5], teamB:[6,7] },
+      { teamA:[9,3], teamB:[13,2] }
+    ],
+    [ // Round 7
+      { teamA:[11,1], teamB:[13,5] },
+      { teamA:[9,12], teamB:[0,2] },
+      { teamA:[10,4], teamB:[14,3] },
+      { teamA:[15,6], teamB:[7,8] }
+    ],
+    [ // Round 8
+      { teamA:[15,7], teamB:[8,9] },
+      { teamA:[11,5], teamB:[0,4] },
+      { teamA:[10,13], teamB:[1,3] },
+      { teamA:[12,2], teamB:[14,6] }
+    ],
+    [ // Round 9
+      { teamA:[13,3], teamB:[0,7] },
+      { teamA:[11,14], teamB:[2,4] },
+      { teamA:[15,8], teamB:[9,10] },
+      { teamA:[12,6], teamB:[1,5] }
+    ],
+    [ // Round 10
+      { teamA:[13,7], teamB:[2,6] },
+      { teamA:[14,4], teamB:[1,8] },
+      { teamA:[12,0], teamB:[3,5] },
+      { teamA:[15,9], teamB:[10,11] }
+    ],
+    [ // Round 11
+      { teamA:[13,1], teamB:[4,6] },
+      { teamA:[15,10], teamB:[11,12] },
+      { teamA:[14,8], teamB:[3,7] },
+      { teamA:[0,5], teamB:[2,9] }
+    ],
+    [ // Round 12
+      { teamA:[15,11], teamB:[12,13] },
+      { teamA:[0,9], teamB:[4,8] },
+      { teamA:[1,6], teamB:[3,10] },
+      { teamA:[14,2], teamB:[5,7] }
+    ],
+    [ // Round 13
+      { teamA:[1,10], teamB:[5,9] },
+      { teamA:[0,3], teamB:[6,8] },
+      { teamA:[2,7], teamB:[4,11] },
+      { teamA:[15,12], teamB:[13,14] }
+    ],
+    [ // Round 14
+      { teamA:[2,11], teamB:[6,10] },
+      { teamA:[15,13], teamB:[14,0] },
+      { teamA:[1,4], teamB:[7,9] },
+      { teamA:[3,8], teamB:[5,12] }
+    ],
+    [ // Round 15
+      { teamA:[15,14], teamB:[0,1] },
+      { teamA:[4,9], teamB:[6,13] },
+      { teamA:[3,12], teamB:[7,11] },
+      { teamA:[2,5], teamB:[8,10] }
+    ]
+  ];
+}
+
+// ===================== PLAY PAGE =====================
+function renderPlayPage() {
+  if(!tournamentGenerated){ document.getElementById('play-content').innerHTML='<div class="alert">Please set up and generate the tournament first.</div>'; return; }
+  const rb = document.getElementById('round-bar');
+  rb.innerHTML = '';
+  for(let r=0;r<15;r++){
+    const b = document.createElement('button');
+    b.className = 'round-btn' + (r===currentRound?' active':'') + (isRoundComplete(r)&&r!==currentRound?' complete':'');
+    b.textContent = r+1;
+    b.onclick = (()=>{const rr=r; return ()=>selectRound(rr);})();
+    rb.appendChild(b);
+  }
+  document.getElementById('play-subtitle').textContent = `Round ${currentRound+1} of 15`;
+  renderRound(currentRound);
+}
+
+function selectRound(r) {
+  currentRound = r;
+  ssRound = r;
+  saveState();
+  renderPlayPage();
+}
+
+function isRoundComplete(r) {
+  if(!scores[r]||!schedule[r]) return false;
+  for(let c=0;c<4;c++){
+    const s=scores[r][c];
+    const m=schedule[r][c];
+    const slots = [
+      [m.teamA[0],'a1','ea1'], [m.teamA[1],'a2','ea2'],
+      [m.teamB[0],'b1','eb1'], [m.teamB[1],'b2','eb2']
+    ];
+    for(const [pi, key, eKey] of slots) {
+      if(isSlotAbsent(pi,r)) continue; // fully absent — skip
+      // Base player must have a score unless they dropped out
+      if(!isAbsent(pi,r) && (s[key]==='' || s[key]===undefined)) return false;
+      // Extra score is optional — missing means base played solo that round
+    }
+  }
+  return true;
+}
+
+function renderRound(r) {
+  const content = document.getElementById('play-content');
+  const round = schedule[r];
+  let html = `<div class="courts-grid">`;
+  for(let c=0;c<4;c++){
+    const match = round[c];
+    const sc = scores[r][c];
+    const piA1=match.teamA[0], piA2=match.teamA[1], piB1=match.teamB[0], piB2=match.teamB[1];
+    const pA1=players[piA1], pA2=players[piA2], pB1=players[piB1], pB2=players[piB2];
+
+    // Extra player slots
+    const exA1=extraForBase(piA1), exA2=extraForBase(piA2), exB1=extraForBase(piB1), exB2=extraForBase(piB2);
+    const exNameA1=exA1!==null?extras[exA1-16].name:'', exNameA2=exA2!==null?extras[exA2-16].name:'';
+    const exNameB1=exB1!==null?extras[exB1-16].name:'', exNameB2=exB2!==null?extras[exB2-16].name:'';
+
+    const abA1=isSlotAbsent(piA1,r), abA2=isSlotAbsent(piA2,r), abB1=isSlotAbsent(piB1,r), abB2=isSlotAbsent(piB2,r);
+    const doA1=dropouts[piA1][r], doA2=dropouts[piA2][r], doB1=dropouts[piB1][r], doB2=dropouts[piB2][r];
+
+    const rawA1=abA1?0:sc.a1, rawA2=abA2?0:sc.a2, rawB1=abB1?0:sc.b1, rawB2=abB2?0:sc.b2;
+    const exRaw=k=>sc[k]!==undefined&&sc[k]!==null&&sc[k]!==''?sc[k]:'';
+    const rawEA1=exA1!==null?exRaw('ea1'):'', rawEA2=exA2!==null?exRaw('ea2'):'';
+    const rawEB1=exB1!==null?exRaw('eb1'):'', rawEB2=exB2!==null?exRaw('eb2'):'';
+
+    const sA=teamTotal(piA1,piA2,rawA1,rawA2,r,rawEA1,rawEA2);
+    const sB=teamTotal(piB1,piB2,rawB1,rawB2,r,rawEB1,rawEB2);
+
+    const forcedDraw=(abA1&&abA2)||(abB1&&abB2)||
+      (ghosts[piA1]&&doA2)||(ghosts[piA2]&&doA1)||
+      (ghosts[piB1]&&doB2)||(ghosts[piB2]&&doB1);
+
+    const slotFilled=(pi,rawBase,rawEx,eIdx)=>{
+      if(isSlotAbsent(pi,r)) return true;
+      if(!isAbsent(pi,r) && (rawBase===''||rawBase===undefined)) return false;
+      return true; // extra score optional — missing means base plays solo
+    };
+    const aFilled=slotFilled(piA1,rawA1,rawEA1,exA1)&&slotFilled(piA2,rawA2,rawEA2,exA2);
+    const bFilled=slotFilled(piB1,rawB1,rawEB1,exB1)&&slotFilled(piB2,rawB2,rawEB2,exB2);
+    const allFilled=aFilled&&bFilled;
+
+    const {tpA,tpB}=allFilled?(forcedDraw?{tpA:effectivePot().base,tpB:effectivePot().base}:calcBothPts(sA,sB)):{tpA:null,tpB:null};
+    const dispTpA=forcedDraw&&allFilled?effectivePot().base:tpA;
+    const dispTpB=forcedDraw&&allFilled?effectivePot().base:tpB;
+    const aClass=allFilled&&!forcedDraw?(sA>sB?'win':sA<sB?'lose':''):'';
+    const bClass=allFilled&&!forcedDraw?(sB>sA?'win':sB<sA?'lose':''):'';
+    const tpColorA=allFilled?(forcedDraw?'var(--accent)':sA>sB?'var(--win)':sA<sB?'var(--lose)':'var(--accent)'):'var(--accent)';
+    const tpColorB=allFilled?(forcedDraw?'var(--accent)':sB>sA?'var(--win)':sB<sA?'var(--lose)':'var(--accent)'):'var(--accent)';
+    const showX2A=(abA1||abA2)&&!(abA1&&abA2);
+    const showX2B=(abB1||abB2)&&!(abB1&&abB2);
+
+    // Display score for a slot: show slot score (averaged if extra present), or markers
+    const slotDisp=(pi,raw,rawEx,eIdx,isDo)=>{
+      if(ghosts[pi]) return '👻';
+      if(isSlotAbsent(pi,r)) return '—';
+      if(!isAbsent(pi,r) && (raw===''||raw===undefined)) return null; // base score not entered yet
+      const score = getSlotScore(pi, r, raw, rawEx);
+      // Show "avg" label only when both base and extra are genuinely present and scored
+      const extraIdx = extraForBase(pi);
+      const bothScored = extraIdx!==null && !isExtraAbsent(extraIdx,r) && !isAbsent(pi,r)
+                         && rawEx!==''&&rawEx!==undefined && raw!==''&&raw!==undefined;
+      if(bothScored){
+        return `${score}<span style="font-size:0.6rem;color:var(--muted);margin-left:2px">avg</span>`;
+      }
+      return score;
+    };
+    const dispA1=slotDisp(piA1,rawA1,rawEA1,exA1,doA1);
+    const dispA2=slotDisp(piA2,rawA2,rawEA2,exA2,doA2);
+    const dispB1=slotDisp(piB1,rawB1,rawEB1,exB1,doB1);
+    const dispB2=slotDisp(piB2,rawB2,rawEB2,exB2,doB2);
+
+    // Build a player row with optional extra sub-row
+    const playerRowHtml=(name,exName,disp,ab,isDo,eIdx,eAbsent)=>{
+      const tag=isDo?'<span style="font-size:0.65rem;color:var(--lose)">(out)</span>':
+                 ab&&!isDo?'':'';
+      return `<div style="display:flex;align-items:center;gap:0.4rem">
+        <span class="player-badge" style="flex:1;${ab?'color:var(--muted);font-style:italic':''}">
+          ${name}${isDo?' <span style="font-size:0.65rem;color:var(--lose)">(out)</span>':''}
+          ${exName&&!eAbsent?`<span style="font-size:0.65rem;color:var(--accent);margin-left:3px">+${exName}</span>`:''}
+          ${exName&&eAbsent?`<span style="font-size:0.65rem;color:var(--lose);margin-left:3px">+${exName}(out)</span>`:''}
+        </span>
+        <span class="player-badge" style="min-width:2.2rem;text-align:center;font-weight:700;${disp!==null?'':'color:var(--muted)'}">${disp!==null?disp:'—'}</span>
+      </div>`;
+    };
+
+    html += `<div class="court-card">
+      <div class="court-header">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="1" y="1" width="18" height="18" rx="2" stroke="white" stroke-width="1.5"/><line x1="1" y1="10" x2="19" y2="10" stroke="white" stroke-width="1"/><line x1="10" y1="1" x2="10" y2="19" stroke="white" stroke-width="1"/><rect x="3" y="3" width="5" height="5" stroke="rgba(255,255,255,0.4)" stroke-width="0.5" fill="none"/></svg>
+        <span class="court-label">Court ${c+1}</span>
+        ${forcedDraw&&allFilled?`<span style="margin-left:auto;font-size:0.7rem;background:rgba(79,195,247,0.15);color:var(--accent);border-radius:4px;padding:2px 6px">Forced Draw</span>`:''}
+      </div>
+      <div class="court-body">
+        <div class="match-teams">
+          <div class="team-col">
+            <span class="team-side-label">Team A</span>
+            ${playerRowHtml(pA1,exNameA1,dispA1,abA1,doA1,exA1,exA1!==null&&isExtraAbsent(exA1,r))}
+            ${playerRowHtml(pA2,exNameA2,dispA2,abA2,doA2,exA2,exA2!==null&&isExtraAbsent(exA2,r))}
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:0.4rem;margin-top:0.3rem;padding-top:0.3rem;border-top:1px solid var(--border)">
+              <span style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted)">Total${showX2A?'&nbsp;×2':''}</span>
+              <span style="font-family:'Bebas Neue',cursive;font-size:1.05rem;color:${aClass==='win'?'var(--win)':aClass==='lose'?'var(--lose)':'var(--text)'}">${aFilled?sA:'—'}</span>
+            </div>
+            ${dispTpA!==null?`<div style="font-family:'Bebas Neue',cursive;font-size:1.8rem;color:${tpColorA};line-height:1;text-align:right;margin-top:2px">${dispTpA} <span style="font-size:0.85rem">PTS</span></div>`:''}
+          </div>
+          <span class="vs-label">VS</span>
+          <div class="team-col">
+            <span class="team-side-label">Team B</span>
+            ${playerRowHtml(pB1,exNameB1,dispB1,abB1,doB1,exB1,exB1!==null&&isExtraAbsent(exB1,r))}
+            ${playerRowHtml(pB2,exNameB2,dispB2,abB2,doB2,exB2,exB2!==null&&isExtraAbsent(exB2,r))}
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:0.4rem;margin-top:0.3rem;padding-top:0.3rem;border-top:1px solid var(--border)">
+              <span style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted)">Total${showX2B?'&nbsp;×2':''}</span>
+              <span style="font-family:'Bebas Neue',cursive;font-size:1.05rem;color:${bClass==='win'?'var(--win)':bClass==='lose'?'var(--lose)':'var(--text)'}">${bFilled?sB:'—'}</span>
+            </div>
+            ${dispTpB!==null?`<div style="font-family:'Bebas Neue',cursive;font-size:1.8rem;color:${tpColorB};line-height:1;text-align:right;margin-top:2px">${dispTpB} <span style="font-size:0.85rem">PTS</span></div>`:''}
+          </div>
+        </div>
+        <hr style="border:none;border-top:1px solid var(--border);margin:0.75rem 0">
+        <div style="text-align:center;padding:0.4rem 0">
+          ${!allFilled
+            ?`<div style="font-size:0.8rem;color:var(--muted)">Enter scores on the Score Sheet tab</div>`
+            :forcedDraw
+            ?`<div style="font-family:'Bebas Neue',cursive;font-size:1.3rem;color:var(--accent);letter-spacing:0.05em">Forced Draw (absent partner)</div>`
+            :sA>sB
+            ?`<div style="font-family:'Bebas Neue',cursive;font-size:1.3rem;color:var(--win);letter-spacing:0.05em">Team A Wins</div>`
+            :sB>sA
+            ?`<div style="font-family:'Bebas Neue',cursive;font-size:1.3rem;color:var(--win);letter-spacing:0.05em">Team B Wins</div>`
+            :`<div style="font-family:'Bebas Neue',cursive;font-size:1.3rem;color:var(--accent);letter-spacing:0.05em">Draw</div>`
+          }
+        </div>
+      </div>
+    </div>`;
+  }
+  html += '</div>';
+  content.innerHTML = html;
+}
+
+
+function parseNum(v) { const n = parseInt(v); return isNaN(n)?0:n; }
+
+// Returns the extra player slot index (16-19) for a given base player index, or null
+function extraForBase(baseIdx) {
+  for (let i = 0; i < 4; i++) {
+    if (extras[i] && extras[i].baseIndex === baseIdx) return i + 16;
+  }
+  return null;
+}
+
+// Returns true if a base player (0-15) is absent for a given round
+// pi is always a base player index (0-15) here
+function isAbsent(pi, r) {
+  if (ghosts[pi]) return true;
+  if (r !== undefined && dropouts[pi] && dropouts[pi][r]) return true;
+  return false;
+}
+
+// Returns true if an extra player (index 16-19) is absent for a given round
+function isExtraAbsent(extraIdx, r) {
+  return r !== undefined && dropouts[extraIdx] && dropouts[extraIdx][r];
+}
+
+// Get the effective score for a base player slot in a given round.
+// If the base player has an extra paired, their two raw scores are averaged (floor).
+// Drop-out rules:
+//   both present   → floor((base + extra) / 2)
+//   extra absent   → base score as-is
+//   base absent, extra present → extra score as-is (extra acts as base)
+//   both absent    → treat as fully absent (caller handles via isAbsent)
+// rawBase: raw score value for the base player slot
+// rawExtra: raw score value for the extra player slot (or '' if no extra)
+function getSlotScore(pi, r, rawBase, rawExtra) {
+  const extraIdx = extraForBase(pi);
+  if (extraIdx === null) {
+    return parseNum(rawBase);
+  }
+  const baseAbsent = isAbsent(pi, r);
+  const extraAbs   = isExtraAbsent(extraIdx, r);
+  // Also treat a blank/missing extra score as "extra not playing this round"
+  const extraScoreMissing = (rawExtra === '' || rawExtra === undefined || rawExtra === null);
+
+  if (baseAbsent && !extraAbs && !extraScoreMissing) {
+    return parseNum(rawExtra);
+  }
+  if (baseAbsent) {
+    return 0; // base absent, extra also absent or no score
+  }
+  if (extraAbs || extraScoreMissing) {
+    return parseNum(rawBase); // extra not playing, base plays solo
+  }
+  // Both present and both have scores — average, floor
+  return Math.floor((parseNum(rawBase) + parseNum(rawExtra)) / 2);
+}
+
+// Returns true if a slot is completely absent (no one available to play)
+function isSlotAbsent(pi, r) {
+  if (!isAbsent(pi, r)) return false; // base is present
+  const extraIdx = extraForBase(pi);
+  if (extraIdx === null) return true;  // no extra, base is gone → absent
+  return isExtraAbsent(extraIdx, r);  // both must be absent
+}
+
+function teamTotal(playerIdx0, playerIdx1, rawScore0, rawScore1, r, rawExtra0, rawExtra1) {
+  const ab0 = isSlotAbsent(playerIdx0, r), ab1 = isSlotAbsent(playerIdx1, r);
+  if (ab0 && ab1) return 0;
+  const s0 = getSlotScore(playerIdx0, r, rawScore0, rawExtra0 !== undefined ? rawExtra0 : '');
+  const s1 = getSlotScore(playerIdx1, r, rawScore1, rawExtra1 !== undefined ? rawExtra1 : '');
+  if (ab0) return s1 * 2;
+  if (ab1) return s0 * 2;
+  return s0 + s1;
+}
+
+// Is this score slot a permanent ghost? (ghost scores are always 0 and can't be entered)
+function isGhost(pi) { return !!ghosts[pi]; }
+
+function setScore(r, c, key, val) {
+  scores[r][c][key] = val === '' ? '' : val;
+  saveState();
+  renderRound(r);
+  // Update round btn complete state
+  const btns = document.querySelectorAll('.round-btn');
+  if(btns[r]) btns[r].classList.toggle('complete', isRoundComplete(r) && r!==currentRound);
+  updateLeaderboard();
+}
+
+function setExtraScore(r, c, key, extraSlotIdx, val) {
+  // scores[r][c] stores extra scores under keys like 'ea1','ea2','eb1','eb2'
+  const eKey = 'e' + key; // e.g. 'a1' → 'ea1'
+  scores[r][c][eKey] = val === '' ? '' : val;
+  saveState();
+  renderRound(r);
+  const btns = document.querySelectorAll('.round-btn');
+  if(btns[r]) btns[r].classList.toggle('complete', isRoundComplete(r) && r!==currentRound);
+  updateLeaderboard();
+}
+
+
+// ===================== SCORING FORMULA =====================
+// Tournament points per set:
+//   Total pot = effectiveQ * 4 (always fully distributed)
+//   Winner gets their team score + opponent's team score (i.e. full pot) capped, loser gets remainder
+//   More precisely: winnerPts = clamp(base + diff, 0, max), loserPts = max - winnerPts
+//   Where base = effectiveQ*2, diff = winnerScore - loserScore, max = effectiveQ*4
+//   effectiveQ = numQuestionsOverride if set, else numQuestions × pointsPerQuestion
+function effectivePot() {
+  // Returns {max, base} for pts calculation.
+  // If override is set: override IS the total pot, base = pot/2.
+  // Otherwise: pot = numQuestions * pointsPerQuestion * 4, base = numQuestions * pointsPerQuestion * 2.
+  if (numQuestionsOverride != null && numQuestionsOverride > 0) {
+    return { max: numQuestionsOverride, base: numQuestionsOverride / 2 };
+  }
+  const indivMax = numQuestions * pointsPerQuestion;
+  return { max: indivMax * 4, base: indivMax * 2 };
+}
+
+function calcTournamentPts(teamScore, oppScore) {
+  const { max, base } = effectivePot();
+  const diff = teamScore - oppScore;
+  const raw = base + diff;
+  const myPts = Math.min(Math.max(raw, 0), max);
+  return myPts;
+}
+
+function calcBothPts(sA, sB) {
+  const { max } = effectivePot();
+  const tpA = calcTournamentPts(sA, sB);
+  const tpB = max - tpA;
+  return { tpA, tpB };
+}
+
+// ===================== LEADERBOARD =====================
+let currentLbTab = 1;
+
+// ── Shared leaderboard canvas builder ───────────────────────────────────
+function buildLeaderboardCanvas(tab, logoImg) {
+  const isLB1 = tab === 1, isLB3 = tab === 3;
+  const tbody = document.getElementById(isLB1 ? 'lb1-body' : (isLB3 ? 'lb3-body' : 'lb2-body'));
+  const thead = tbody ? tbody.closest('table').querySelector('thead') : null;
+  if(!tbody||!thead) return null;
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  if(!rows.length) return null;
+
+  const headerCells = Array.from(thead.querySelectorAll('th')).map(th=>th.textContent.trim());
+  const dataRows = rows.map(tr=>Array.from(tr.querySelectorAll('td')).map(td=>td.textContent.trim()));
+
+  const SCALE=2, MARGIN=28, ROW_H=48, HEADER_H=52, TITLE_H=72, FOOTER_H=40;
+  const cols=headerCells.length, nameColW=280, otherColW=60;
+  const totalW = 52+nameColW+(cols-2)*otherColW+MARGIN*2;
+  const totalH = TITLE_H+HEADER_H+dataRows.length*ROW_H+FOOTER_H+MARGIN*2;
+
+  const c = document.createElement('canvas');
+  c.width=totalW*SCALE; c.height=totalH*SCALE;
+  const ctx=c.getContext('2d');
+  ctx.scale(SCALE,SCALE);
+
+  // Background
+  const bg=ctx.createLinearGradient(0,0,totalW,totalH);
+  bg.addColorStop(0,'#12062a'); bg.addColorStop(1,'#1c0f3a');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,totalW,totalH);
+  const g1=ctx.createRadialGradient(0,0,0,0,0,totalW*0.7);
+  g1.addColorStop(0,'rgba(0,212,255,0.08)'); g1.addColorStop(1,'rgba(0,212,255,0)');
+  ctx.fillStyle=g1; ctx.fillRect(0,0,totalW,totalH);
+  const g2=ctx.createRadialGradient(totalW,totalH,0,totalW,totalH,totalW*0.7);
+  g2.addColorStop(0,'rgba(124,58,237,0.12)'); g2.addColorStop(1,'rgba(124,58,237,0)');
+  ctx.fillStyle=g2; ctx.fillRect(0,0,totalW,totalH);
+
+  // Tiled logo
+  if(logoImg){
+    const tW=180, tH=Math.round(180*logoImg.naturalHeight/logoImg.naturalWidth)||180;
+    ctx.globalAlpha=0.04;
+    for(let ty=0;ty<totalH;ty+=tH) for(let tx=0;tx<totalW;tx+=tW) ctx.drawImage(logoImg,tx,ty,tW,tH);
+    ctx.globalAlpha=1.0;
+  }
+
+  // Accent bars
+  const bar=ctx.createLinearGradient(0,0,totalW,0);
+  bar.addColorStop(0,'#00d4ff'); bar.addColorStop(0.5,'#7c3aed'); bar.addColorStop(1,'#5b21b6');
+  ctx.fillStyle=bar; ctx.fillRect(0,0,totalW,4);
+
+  let y=MARGIN;
+  ctx.font=`bold 28px Arial`; ctx.fillStyle='#ffffff'; ctx.textAlign='center';
+  ctx.fillText('AMERICANO',totalW/2,y+30);
+  ctx.font=`16px Arial`; ctx.fillStyle='#8a87b0';
+  ctx.fillText(isLB1?'Main Standings':isLB3?'Team Stats':'Individual Stats',totalW/2,y+52);
+  y+=TITLE_H;
+
+  const colXs=[MARGIN, MARGIN+52];
+  for(let i=2;i<cols;i++) colXs.push(MARGIN+52+nameColW+(i-2)*otherColW);
+  const colWidths=[52,nameColW,...Array(cols-2).fill(otherColW)];
+
+  // Header
+  const hdrGrad=ctx.createLinearGradient(0,y,0,y+HEADER_H);
+  hdrGrad.addColorStop(0,'#2a1050'); hdrGrad.addColorStop(1,'#1c0f3a');
+  ctx.fillStyle=hdrGrad; ctx.fillRect(MARGIN,y,totalW-MARGIN*2,HEADER_H);
+  ctx.strokeStyle='rgba(124,58,237,0.5)'; ctx.lineWidth=1;
+  ctx.strokeRect(MARGIN+0.5,y+0.5,totalW-MARGIN*2-1,HEADER_H-1);
+  headerCells.forEach((h,i)=>{
+    ctx.font=`bold 13px Arial`; ctx.fillStyle='#00d4ff';
+    ctx.textAlign=i===1?'left':'center';
+    ctx.fillText(h.toUpperCase(), i===1?colXs[i]+8:colXs[i]+colWidths[i]/2, y+HEADER_H/2+5);
+  });
+  y+=HEADER_H;
+
+  // Rows
+  const rankColours=['#e8b43a','#aaaaaa','#cd7f32','#7c7caa'];
+  dataRows.forEach((row,ri)=>{
+    ctx.fillStyle=ri%2===0?'rgba(255,255,255,0.03)':'rgba(255,255,255,0.06)';
+    ctx.fillRect(MARGIN,y,totalW-MARGIN*2,ROW_H);
+    if(ri<dataRows.length-1){
+      ctx.strokeStyle='rgba(255,255,255,0.06)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(MARGIN,y+ROW_H); ctx.lineTo(totalW-MARGIN,y+ROW_H); ctx.stroke();
+    }
+    row.forEach((cell,i)=>{
+      const cx=i===1?colXs[i]+8:colXs[i]+colWidths[i]/2;
+      const cy=y+ROW_H/2+5;
+      ctx.textAlign=i===1?'left':'center';
+      if(i===0){
+        ctx.fillStyle=ri<4?rankColours[ri]:'#4a4a6a';
+        ctx.beginPath();
+        if(ctx.roundRect) ctx.roundRect(colXs[i]+6,y+ROW_H/2-12,40,24,6);
+        else ctx.rect(colXs[i]+6,y+ROW_H/2-12,40,24);
+        ctx.fill();
+        ctx.font=`bold 14px Arial`; ctx.fillStyle='#ffffff'; ctx.textAlign='center';
+        ctx.fillText(cell,colXs[i]+26,cy);
+      } else if(i===1){
+        ctx.font=`600 14px Arial`; ctx.fillStyle='#f0f0ff';
+        ctx.fillText(cell.length>28?cell.slice(0,27)+'…':cell,cx,cy);
+      } else {
+        let colour='#8a87b0';
+        const hdr=headerCells[i].toUpperCase();
+        if(hdr==='W') colour='#27ae60';
+        else if(hdr==='L') colour='#c0392b';
+        else if(hdr==='T.PTS'||hdr==='SCORE'||hdr==='TEAM PTS') colour='#00d4ff';
+        else if(hdr==='N/P'&&cell!=='—') colour='#c0392b';
+        else if(hdr==='+/-'||hdr==='+/−') colour=cell.startsWith('+')||(!cell.startsWith('-')&&cell!=='0'&&cell!=='')?'#27ae60':'#c0392b';
+        else if(hdr==='%') colour=parseInt(cell)>=50?'#27ae60':'#c0392b';
+        ctx.font=`13px Arial`; ctx.fillStyle=colour;
+        ctx.fillText(cell,cx,cy);
+      }
+    });
+    y+=ROW_H;
+  });
+
+  // Footer
+  y+=8;
+  ctx.strokeStyle='rgba(0,212,255,0.3)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(MARGIN,y); ctx.lineTo(totalW-MARGIN,y); ctx.stroke();
+  y+=14;
+  ctx.font=`12px Arial`; ctx.fillStyle='#8a87b0'; ctx.textAlign='center';
+  ctx.fillText('Smartphone Quiz Knights  ·  Americano Tournament  ·  '+new Date().toLocaleDateString(),totalW/2,y);
+  ctx.fillStyle=bar; ctx.fillRect(0,totalH-4,totalW,4);
+
+  return c;
+}
+
+function exportLbImage(tab) {
+  const tbody = document.getElementById(tab===1?'lb1-body':tab===3?'lb3-body':'lb2-body');
+  if(!tbody||!tbody.querySelectorAll('tr').length){alert('No leaderboard data yet.');return;}
+
+  const logoSrc=getLogoSrc();
+  const doExport=(logoImg)=>{
+    const dateStr=new Date().toISOString().slice(0,10);
+
+    if(typeof JSZip==='undefined'){
+      // No JSZip — just download this tab's image
+      const canvas=buildLeaderboardCanvas(tab,logoImg);
+      if(!canvas) return;
+      const link=document.createElement('a');
+      link.download=`americano_${tab===1?'standings':tab===3?'teamstats':'individual'}_${dateStr}.png`;
+      link.href=canvas.toDataURL('image/png'); link.click();
+      return;
+    }
+
+    const zip=new JSZip();
+
+    // Both leaderboard images
+    const c1=buildLeaderboardCanvas(1,logoImg);
+    const c2=buildLeaderboardCanvas(2,logoImg);
+    // Team Stats image will be built below
+    if(c1) zip.file(`images/americano_standings_${dateStr}.png`, c1.toDataURL('image/png').split(',')[1],{base64:true});
+    if(c2) zip.file(`images/americano_individual_${dateStr}.png`, c2.toDataURL('image/png').split(',')[1],{base64:true});
+    const c3=buildLeaderboardCanvas(3,logoImg);
+    if(c3) zip.file(`images/americano_teamstats_${dateStr}.png`, c3.toDataURL('image/png').split(',')[1],{base64:true});
+
+    // All 15 round images
+    for(let ri=0;ri<15;ri++){
+      const rc=buildRoundCanvas(ri,logoImg);
+      if(rc) zip.file(`images/rounds/americano_round_${ri+1}.png`,rc.toDataURL('image/png').split(',')[1],{base64:true});
+    }
+
+    // Excel exports
+    if(tournamentGenerated){
+      try{
+        const fixWb=buildFixturesWorkbook();
+        const fixData=XLSX.write(fixWb,{bookType:'xlsx',type:'binary'});
+        const fixBuf=new Uint8Array(fixData.length);
+        for(let i=0;i<fixData.length;i++) fixBuf[i]=fixData.charCodeAt(i)&0xff;
+        zip.file(`data/americano_fixtures_${dateStr}.xlsx`,fixBuf);
+      }catch(e){}
+      try{
+        const scWb=buildScoresWorkbook();
+        const scData=XLSX.write(scWb,{bookType:'xlsx',type:'binary'});
+        const scBuf=new Uint8Array(scData.length);
+        for(let i=0;i<scData.length;i++) scBuf[i]=scData.charCodeAt(i)&0xff;
+        zip.file(`data/americano_scores_${dateStr}.xlsx`,scBuf);
+      }catch(e){}
+    }
+
+    zip.generateAsync({type:'blob'}).then(blob=>{
+      const a=document.createElement('a');
+      a.download=`americano_pack_${dateStr}.zip`;
+      a.href=URL.createObjectURL(blob); a.click();
+    });
+  };
+
+  if(logoSrc){const img=new Image();img.onload=()=>doExport(img);img.onerror=()=>doExport(null);img.src=logoSrc;}
+  else doExport(null);
+}
+
+function showLbTab(n) {
+  currentLbTab = n;
+  document.getElementById('lb-panel-1').style.display = n===1 ? '' : 'none';
+  document.getElementById('lb-panel-2').style.display = n===2 ? '' : 'none';
+  document.getElementById('lb-panel-3').style.display = n===3 ? '' : 'none';
+  [1,2,3].forEach(i=>{
+    const t=document.getElementById('lb-tab-'+i);
+    if(t){ t.style.color=n===i?'var(--accent)':'var(--muted)'; t.style.borderBottomColor=n===i?'var(--accent)':'transparent'; }
+  });
+}
+
+function updateLeaderboard() {
+  const { base } = effectivePot();
+  const numRounds = 15;
+  const numCourts = 4;
+
+  // Per-player accumulators — exclude permanent ghosts; include active extras
+  const stats = {};
+  players.forEach((p,i)=>{ if(!ghosts[i]) stats[i] = {
+    name: p, played: 0, wins: 0, losses: 0, draws: 0, notPlayed: 0,
+    tPts: 0, teamPts: 0, teamScoreFor: 0, teamScoreAgainst: 0, indivScore: 0,
+    isExtra: false,
+  }; });
+  // Add extra players to stats
+  extras.forEach((ex, ei) => {
+    if(ex && ex.name && ex.baseIndex !== null) {
+      const key = 16 + ei;
+      stats[key] = { name: ex.name, played: 0, wins: 0, losses: 0, draws: 0, notPlayed: 0,
+        tPts: 0, teamPts: 0, teamScoreFor: 0, teamScoreAgainst: 0, indivScore: 0, isExtra: true };
+    }
+  });
+
+  for(let r=0; r<numRounds; r++){
+    if(!scores[r]||!schedule[r]) continue;
+    for(let c=0; c<numCourts; c++){
+      const sc = scores[r][c];
+      const match = schedule[r][c];
+      const piA1=match.teamA[0], piA2=match.teamA[1], piB1=match.teamB[0], piB2=match.teamB[1];
+      const doA1=dropouts[piA1][r], doA2=dropouts[piA2][r], doB1=dropouts[piB1][r], doB2=dropouts[piB2][r];
+
+      // Extra indices for each slot
+      const exA1=extraForBase(piA1), exA2=extraForBase(piA2), exB1=extraForBase(piB1), exB2=extraForBase(piB2);
+      const doExA1=exA1!==null&&dropouts[exA1]&&dropouts[exA1][r];
+      const doExA2=exA2!==null&&dropouts[exA2]&&dropouts[exA2][r];
+      const doExB1=exB1!==null&&dropouts[exB1]&&dropouts[exB1][r];
+      const doExB2=exB2!==null&&dropouts[exB2]&&dropouts[exB2][r];
+
+      const rawA1=isSlotAbsent(piA1,r)?0:(sc.a1===''?'':sc.a1);
+      const rawA2=isSlotAbsent(piA2,r)?0:(sc.a2===''?'':sc.a2);
+      const rawB1=isSlotAbsent(piB1,r)?0:(sc.b1===''?'':sc.b1);
+      const rawB2=isSlotAbsent(piB2,r)?0:(sc.b2===''?'':sc.b2);
+      const exRaw=k=>sc[k]!==undefined&&sc[k]!==null&&sc[k]!==''?sc[k]:'';
+      const rawEA1=exA1!==null?exRaw('ea1'):'', rawEA2=exA2!==null?exRaw('ea2'):'';
+      const rawEB1=exB1!==null?exRaw('eb1'):'', rawEB2=exB2!==null?exRaw('eb2'):'';
+
+      // Check completeness per slot.
+      // Extra score is NOT required — if the key is missing/blank the base plays alone.
+      const slotOk=(pi,raw,rawEx,eIdx)=>{
+        if(isSlotAbsent(pi,r)) return true;
+        if(!isAbsent(pi,r)&&(raw===''||raw===undefined)) return false;
+        return true; // extra score is optional; missing = base plays solo
+      };
+      const aFilled=slotOk(piA1,rawA1,rawEA1,exA1)&&slotOk(piA2,rawA2,rawEA2,exA2);
+      const bFilled=slotOk(piB1,rawB1,rawEB1,exB1)&&slotOk(piB2,rawB2,rawEB2,exB2);
+      if(!aFilled||!bFilled) continue;
+
+      const abA1=isSlotAbsent(piA1,r), abA2=isSlotAbsent(piA2,r);
+      const abB1=isSlotAbsent(piB1,r), abB2=isSlotAbsent(piB2,r);
+      const forcedDraw=(abA1&&abA2)||(abB1&&abB2)||
+        (ghosts[piA1]&&doA2)||(ghosts[piA2]&&doA1)||
+        (ghosts[piB1]&&doB2)||(ghosts[piB2]&&doB1);
+
+      const sA=teamTotal(piA1,piA2,rawA1,rawA2,r,rawEA1,rawEA2);
+      const sB=teamTotal(piB1,piB2,rawB1,rawB2,r,rawEB1,rawEB2);
+      const {tpA,tpB}=forcedDraw?{tpA:base,tpB:base}:calcBothPts(sA,sB);
+      const aWin=!forcedDraw&&sA>sB, bWin=!forcedDraw&&sB>sA;
+
+      // Accumulate stats per slot — base player and extra player separately
+      const accumSlot=(pi,eIdx,rawBase,rawEx,isDo,isDoEx,tp,win,lose,sidePts)=>{
+        if(ghosts[pi]) return;
+        const baseAbsent=isAbsent(pi,r);
+        const extraAbsent=eIdx!==null?isExtraAbsent(eIdx,r):true;
+        const extraScoreMissing=(rawEx===''||rawEx===undefined||rawEx===null);
+
+        // Base player
+        if(stats[pi]!==undefined){
+          const s=stats[pi];
+          if(isDo){ s.notPlayed++; }
+          else if(!baseAbsent){
+            s.played++; s.tPts+=tp; s.teamPts+=sidePts; s.teamScoreFor+=sA; s.teamScoreAgainst+=sB;
+            s.indivScore+=parseNum(rawBase);
+            if(win)s.wins++;else if(lose)s.losses++;else s.draws++;
+          }
+        }
+        // Extra player — only gets stats if they actually have a score this round
+        if(eIdx!==null && stats[eIdx]!==undefined && !extraScoreMissing){
+          const se=stats[eIdx];
+          if(isDoEx){ se.notPlayed++; }
+          else if(!extraAbsent){
+            se.played++; se.tPts+=tp; se.teamPts+=sidePts; se.teamScoreFor+=sA; se.teamScoreAgainst+=sB;
+            se.indivScore+=parseNum(rawEx);
+            if(win)se.wins++;else if(lose)se.losses++;else se.draws++;
+          }
+        }
+      };
+
+      const aWinB=aWin, bWinA=bWin;
+      accumSlot(piA1,exA1,rawA1,rawEA1,doA1,doExA1,tpA,aWin,bWin,sA);
+      accumSlot(piA2,exA2,rawA2,rawEA2,doA2,doExA2,tpA,aWin,bWin,sA);
+      accumSlot(piB1,exB1,rawB1,rawEB1,doB1,doExB1,tpB,bWin,aWin,sB);
+      accumSlot(piB2,exB2,rawB2,rawEB2,doB2,doExB2,tpB,bWin,aWin,sB);
+    }
+  }
+
+  const allStats = Object.values(stats);
+
+  // ---- LB1: Main standings (tournament points) ----
+  const lb1rows = [...allStats].sort((a,b) => {
+    if(b.tPts !== a.tPts) return b.tPts - a.tPts;
+    const diffA = a.teamScoreFor - a.teamScoreAgainst;
+    const diffB = b.teamScoreFor - b.teamScoreAgainst;
+    if(diffB !== diffA) return diffB - diffA;
+    if(b.wins !== a.wins) return b.wins - a.wins;
+    return b.indivScore - a.indivScore;
+  });
+
+  document.getElementById('lb1-desc').textContent =
+    `Ranked by: T.Pts → +/− → W → Indiv total. Win = ${base} + margin · Loss = ${base} − margin · Draw = ${base} each. N/P = not played.`;
+
+  document.getElementById('lb1-body').innerHTML = lb1rows.map((s,i) => {
+    const rankClass = i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'rank-n';
+    const diff = s.teamScoreFor - s.teamScoreAgainst;
+    return `<tr>
+      <td><span class="rank-badge ${rankClass}">${i+1}</span></td>
+      <td style="font-weight:500">${s.name}</td>
+      <td>${s.played}</td>
+      <td style="color:var(--win)">${s.wins}</td>
+      <td style="color:var(--lose)">${s.losses}</td>
+      <td style="color:var(--muted)">${s.draws}</td>
+      <td style="color:${s.notPlayed>0?'var(--lose)':'var(--muted)'}">${s.notPlayed>0?s.notPlayed:'—'}</td>
+      <td style="font-family:'Bebas Neue',cursive;font-size:1.1rem;color:var(--accent)">${s.tPts}</td>
+      <td style="color:${diff>=0?'var(--win)':'var(--lose)'}">${diff>0?'+':''}${diff}</td>
+      <td style="color:var(--muted)">${s.indivScore}</td>
+    </tr>`;
+  }).join('');
+
+  // ---- LB2: Individual stats ----
+  const lb2rows = [...allStats].sort((a,b) => {
+    if(b.indivScore !== a.indivScore) return b.indivScore - a.indivScore;
+    if(b.wins !== a.wins) return b.wins - a.wins;
+    return b.draws - a.draws;
+  });
+
+  const maxIndiv = numQuestions * pointsPerQuestion * numRounds;
+  const ppqLabel = pointsPerQuestion > 1 ? ` × ${pointsPerQuestion} pts/q` : '';
+  document.getElementById('lb2-desc').textContent =
+    `Ranked by individual questions answered correctly across all sets. Max possible: ${maxIndiv} (${numQuestions} × ${numRounds} sets${ppqLabel}).`;
+
+  document.getElementById('lb2-body').innerHTML = lb2rows.map((s,i) => {
+    const rankClass = i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'rank-n';
+    const pct = s.played > 0 ? Math.round(s.indivScore / (numQuestions * pointsPerQuestion * numRounds) * 100) : 0;
+    return `<tr>
+      <td><span class="rank-badge ${rankClass}">${i+1}</span></td>
+      <td style="font-weight:500">${s.name}</td>
+      <td>${s.played}</td>
+      <td style="color:var(--win)">${s.wins}</td>
+      <td style="color:var(--lose)">${s.losses}</td>
+      <td style="color:${s.notPlayed>0?'var(--lose)':'var(--muted)'}">${s.notPlayed>0?s.notPlayed:'—'}</td>
+      <td style="font-family:'Bebas Neue',cursive;font-size:1.1rem;color:var(--accent)">${s.indivScore}</td>
+      <td style="color:var(--muted)">${numQuestions * pointsPerQuestion * numRounds}</td>
+      <td style="color:${pct>=50?'var(--win)':'var(--lose)'}">${pct}%</td>
+    </tr>`;
+  }).join('');
+
+  // ---- LB3: Team Stats (combined court score both teams, accumulated) ----
+  const lb3rows = [...allStats].sort((a,b) => {
+    if(b.teamPts !== a.teamPts) return b.teamPts - a.teamPts;
+    if(b.wins !== a.wins) return b.wins - a.wins;
+    if(a.losses !== b.losses) return a.losses - b.losses;
+    if(b.draws !== a.draws) return b.draws - a.draws;
+    return b.indivScore - a.indivScore;
+  });
+
+  document.getElementById('lb3-desc').textContent =
+    `Ranked by: Team Pts → W → L → D → Indiv. Team Pts = combined score of both teams on your court each set (sum of all four players' scores).`;
+
+  document.getElementById('lb3-body').innerHTML = lb3rows.map((s,i) => {
+    const rankClass = i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'rank-n';
+    return `<tr>
+      <td><span class="rank-badge ${rankClass}">${i+1}</span></td>
+      <td style="font-weight:500">${s.name}</td>
+      <td>${s.played}</td>
+      <td style="color:var(--win)">${s.wins}</td>
+      <td style="color:var(--lose)">${s.losses}</td>
+      <td style="color:var(--muted)">${s.draws}</td>
+      <td style="color:${s.notPlayed>0?'var(--lose)':'var(--muted)'}">${s.notPlayed>0?s.notPlayed:'—'}</td>
+      <td style="font-family:'Bebas Neue',cursive;font-size:1.1rem;color:var(--accent)">${s.teamPts}</td>
+      <td style="color:var(--muted)">${s.indivScore}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ===================== GRAPHICS =====================
+// ── Shared logo extractor ────────────────────────────────────────────────
+function getLogoSrc() {
+  for(const sheet of document.styleSheets){
+    try{
+      for(const rule of sheet.cssRules){
+        if(rule.selectorText && rule.selectorText.includes('body::before')){
+          const m = rule.style.backgroundImage.match(/url\("?(data:[^"')]+)"?\)/);
+          if(m) return m[1];
+        }
+      }
+    }catch(e){}
+  }
+  const styleText = Array.from(document.querySelectorAll('style')).map(s=>s.textContent).join('');
+  const m = styleText.match(/body::before[^{]*\{[^}]*background-image:\s*url\('([^']+)'\)/);
+  return m ? m[1] : null;
+}
+
+// ── Court round canvas renderer ──────────────────────────────────────────
+function buildRoundCanvas(r, logoImg) {
+  if(!tournamentGenerated||!schedule[r]) return null;
+
+  const SCALE = 2;
+  const W = 1280, H = 720; // 16:9
+  const c = document.createElement('canvas');
+  c.width = W*SCALE; c.height = H*SCALE;
+  const ctx = c.getContext('2d');
+  ctx.scale(SCALE, SCALE);
+
+  // Background
+  const bg = ctx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0,'#12062a'); bg.addColorStop(1,'#1c0f3a');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+  // Radial glows
+  const g1=ctx.createRadialGradient(0,0,0,0,0,W*0.6);
+  g1.addColorStop(0,'rgba(0,212,255,0.08)'); g1.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=g1; ctx.fillRect(0,0,W,H);
+  const g2=ctx.createRadialGradient(W,H,0,W,H,W*0.6);
+  g2.addColorStop(0,'rgba(124,58,237,0.12)'); g2.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=g2; ctx.fillRect(0,0,W,H);
+
+  // Tiled logo at 4% opacity
+  if(logoImg){
+    const tW=180, tH=Math.round(180*logoImg.naturalHeight/logoImg.naturalWidth)||180;
+    ctx.globalAlpha=0.04;
+    for(let ty=0;ty<H;ty+=tH) for(let tx=0;tx<W;tx+=tW) ctx.drawImage(logoImg,tx,ty,tW,tH);
+    ctx.globalAlpha=1;
+  }
+
+  // Top accent bar
+  const bar=ctx.createLinearGradient(0,0,W,0);
+  bar.addColorStop(0,'#00d4ff'); bar.addColorStop(0.5,'#7c3aed'); bar.addColorStop(1,'#5b21b6');
+  ctx.fillStyle=bar; ctx.fillRect(0,0,W,3);
+
+  // Title
+  ctx.font='bold 32px Arial'; ctx.textAlign='center';
+  ctx.fillStyle='#00d4ff'; ctx.fillText('AMERICANO COURTS', W/2, 36);
+  ctx.font='16px Arial'; ctx.fillStyle='#8a87b0';
+  ctx.fillText(`ROUND ${r+1} OF 15`, W/2, 58);
+
+  // 4 court cards in 2×2 grid
+  const PAD=14, TOP=72;
+  const cardW=(W-PAD*3)/2, cardH=(H-TOP-PAD*3)/2;
+
+  for(let ci=0;ci<4;ci++){
+    const col=ci%2, row=Math.floor(ci/2);
+    const cx=PAD+col*(cardW+PAD), cy=TOP+PAD+row*(cardH+PAD);
+    drawCourtCardCanvas(ctx, r, ci, cx, cy, cardW, cardH);
+  }
+
+  // Bottom accent bar
+  ctx.fillStyle=bar; ctx.fillRect(0,H-3,W,3);
+
+  return c;
+}
+
+function drawCourtCardCanvas(ctx, r, ci, cx, cy, cw, ch) {
+  const match=schedule[r][ci];
+  const sc=scores[r]?scores[r][ci]:null;
+  const [piA1,piA2,piB1,piB2]=[match.teamA[0],match.teamA[1],match.teamB[0],match.teamB[1]];
+
+  const exA1=extraForBase(piA1),exA2=extraForBase(piA2),exB1=extraForBase(piB1),exB2=extraForBase(piB2);
+  const exRaw=k=>sc&&sc[k]!==undefined&&sc[k]!==null&&sc[k]!==''?sc[k]:'';
+  const rEA1=exA1!==null?exRaw('ea1'):'',rEA2=exA2!==null?exRaw('ea2'):'';
+  const rEB1=exB1!==null?exRaw('eb1'):'',rEB2=exB2!==null?exRaw('eb2'):'';
+
+  const abA1=isSlotAbsent(piA1,r),abA2=isSlotAbsent(piA2,r);
+  const abB1=isSlotAbsent(piB1,r),abB2=isSlotAbsent(piB2,r);
+  const doA1=dropouts[piA1]&&dropouts[piA1][r],doA2=dropouts[piA2]&&dropouts[piA2][r];
+  const doB1=dropouts[piB1]&&dropouts[piB1][r],doB2=dropouts[piB2]&&dropouts[piB2][r];
+
+  const rawA1=abA1?0:(sc?sc.a1:''),rawA2=abA2?0:(sc?sc.a2:'');
+  const rawB1=abB1?0:(sc?sc.b1:''),rawB2=abB2?0:(sc?sc.b2:'');
+
+  const sA=teamTotal(piA1,piA2,rawA1,rawA2,r,rEA1,rEA2);
+  const sB=teamTotal(piB1,piB2,rawB1,rawB2,r,rEB1,rEB2);
+
+  const slotFill=(pi,raw)=>isSlotAbsent(pi,r)||(raw!==''&&raw!==undefined);
+  const aFilled=slotFill(piA1,rawA1)&&slotFill(piA2,rawA2);
+  const bFilled=slotFill(piB1,rawB1)&&slotFill(piB2,rawB2);
+  const allFilled=aFilled&&bFilled;
+
+  const forcedDraw=allFilled&&((abA1&&abA2)||(abB1&&abB2)||
+    (ghosts[piA1]&&doA2)||(ghosts[piA2]&&doA1)||(ghosts[piB1]&&doB2)||(ghosts[piB2]&&doB1));
+
+  const {max:pot,base}=effectivePot();
+  const {tpA,tpB}=allFilled?(forcedDraw?{tpA:base,tpB:base}:calcBothPts(sA,sB)):{tpA:null,tpB:null};
+  const aWin=allFilled&&!forcedDraw&&sA>sB, bWin=allFilled&&!forcedDraw&&sB>sA;
+
+  // Card background
+  const rr=8;
+  ctx.fillStyle='#1c0f3a';
+  ctx.beginPath(); ctx.roundRect?ctx.roundRect(cx,cy,cw,ch,rr):ctx.rect(cx,cy,cw,ch); ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.1)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.roundRect?ctx.roundRect(cx+0.5,cy+0.5,cw-1,ch-1,rr):ctx.rect(cx+0.5,cy+0.5,cw-1,ch-1); ctx.stroke();
+
+  // Header bar
+  const HDR=48;
+  const hdrGrad=ctx.createLinearGradient(cx,cy,cx+cw,cy);
+  hdrGrad.addColorStop(0,'#2d7a3a'); hdrGrad.addColorStop(1,'#1a5c28');
+  ctx.fillStyle=hdrGrad;
+  ctx.beginPath(); ctx.roundRect?ctx.roundRect(cx,cy,cw,HDR,{upperLeft:rr,upperRight:rr,lowerLeft:0,lowerRight:0}):ctx.rect(cx,cy,cw,HDR); ctx.fill();
+  ctx.font='bold 22px Arial'; ctx.fillStyle='#ffffff'; ctx.textAlign='center';
+  ctx.fillText('Court '+(ci+1), cx+cw/2, cy+32);
+
+  // Layout: two team columns with VS in middle
+  const BODY_Y=cy+HDR+10;
+  const BODY_H=ch-HDR-10;
+  const VS_W=50;
+  const teamW=(cw-VS_W-20)/2;
+  const tAx=cx+8, tBx=cx+8+teamW+VS_W+4;
+
+  const drawTeam=(tx,label,pi1,pi2,raw1,raw2,rEx1,rEx2,ab1,ab2,do1,do2,total,filled,tp,isWin,showX2,isLoser)=>{
+    const LROW=28, PR=40, GAP=6;
+    let ty=BODY_Y;
+
+    // Team label
+    ctx.font='bold 16px Arial'; ctx.fillStyle='#8a87b0'; ctx.textAlign='center';
+    ctx.fillText(label.toUpperCase(), tx+teamW/2, ty+16);
+    ty+=LROW;
+
+    // Player rows
+    [[pi1,raw1,rEx1,ab1,do1],[pi2,raw2,rEx2,ab2,do2]].forEach(([pi,raw,rawEx,ab,isDo])=>{
+      const name=players[pi];
+      const exIdx=extraForBase(pi);
+      const score=ab?'—':raw===''?'—':getSlotScore(pi,r,raw,rawEx);
+      const eAbsent=exIdx!==null&&isExtraAbsent(exIdx,r);
+      const exName=exIdx!==null&&!eAbsent?extras[exIdx-16].name:'';
+
+      // Player card bg
+      ctx.fillStyle='rgba(255,255,255,0.07)';
+      if(ctx.roundRect){ctx.beginPath();ctx.roundRect(tx,ty,teamW,PR,5);ctx.fill();}
+      else ctx.fillRect(tx,ty,teamW,PR);
+      ctx.strokeStyle='rgba(255,255,255,0.1)'; ctx.lineWidth=0.5;
+      if(ctx.roundRect){ctx.beginPath();ctx.roundRect(tx+0.5,ty+0.5,teamW-1,PR-1,5);ctx.stroke();}
+      else ctx.strokeRect(tx+0.5,ty+0.5,teamW-1,PR-1);
+
+      const scoreAreaW=40;
+      const nameAreaW=teamW-scoreAreaW-14;
+      const midY=ty+PR/2+7;
+
+      // Name — truncate to fit
+      ctx.font=(isDo?'italic ':'')+' 18px Arial';
+      ctx.fillStyle=ab?'#8a87b0':'#f0f0ff';
+      ctx.textAlign='left';
+      let displayName=name+(exName?' +'+exName:'');
+      while(ctx.measureText(displayName).width>nameAreaW&&displayName.length>3)
+        displayName=displayName.slice(0,-2)+'\u2026';
+      ctx.fillText(displayName, tx+8, midY);
+
+      // Score
+      ctx.font='bold 20px Arial'; ctx.fillStyle='#00d4ff'; ctx.textAlign='right';
+      ctx.fillText(String(score), tx+teamW-6, midY);
+
+      ty+=PR+GAP;
+    });
+
+    // Total
+    ty+=4;
+    ctx.font='14px Arial'; ctx.fillStyle='#8a87b0'; ctx.textAlign='left';
+    ctx.fillText('TOTAL'+(showX2?' x2':''), tx, ty+14);
+    ctx.font='bold 24px Arial';
+    ctx.fillStyle=isWin?'#27ae60':isLoser?'#c0392b':'#f0f0ff';
+    ctx.textAlign='right';
+    ctx.fillText(filled?String(total):'—', tx+teamW, ty+20);
+    ty+=28;
+
+    // PTS
+    if(tp!==null){
+      const ptsColor=isWin?'#27ae60':isLoser?'#c0392b':'#00d4ff';
+      ctx.font='bold 30px Arial'; ctx.fillStyle=ptsColor; ctx.textAlign='right';
+      ctx.fillText(tp+' PTS', tx+teamW, ty+26);
+    }
+  };
+
+  const showX2A=(abA1||abA2)&&!(abA1&&abA2), showX2B=(abB1||abB2)&&!(abB1&&abB2);
+  drawTeam(tAx,'Team A',piA1,piA2,rawA1,rawA2,rEA1,rEA2,abA1,abA2,doA1,doA2,sA,aFilled,tpA,aWin,showX2A,bWin);
+
+  // VS
+  ctx.font='bold 26px Arial'; ctx.fillStyle='#6b6890'; ctx.textAlign='center';
+  ctx.fillText('VS', cx+cw/2, BODY_Y+BODY_H/2);
+
+  drawTeam(tBx,'Team B',piB1,piB2,rawB1,rawB2,rEB1,rEB2,abB1,abB2,doB1,doB2,sB,bFilled,tpB,bWin,showX2B,aWin);
+
+  // Result banner
+  if(allFilled){
+    const BH=36, by=cy+ch-BH;
+    ctx.fillStyle='rgba(20,10,45,0.97)';
+    ctx.fillRect(cx,by,cw,BH);
+    ctx.strokeStyle='rgba(255,255,255,0.12)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(cx,by); ctx.lineTo(cx+cw,by); ctx.stroke();
+    const resultText=forcedDraw?'Forced Draw':aWin?'Team A Wins':bWin?'Team B Wins':'Draw';
+    const resultColor=(forcedDraw||(!aWin&&!bWin))?'#00d4ff':'#27ae60';
+    ctx.font='bold 20px Arial'; ctx.fillStyle=resultColor; ctx.textAlign='center';
+    ctx.fillText(resultText, cx+cw/2, by+BH*0.72);
+  }
+}
+
+
+function downloadRoundImage(r) {
+  if(!tournamentGenerated){alert('Generate the tournament first.');return;}
+  const logoSrc=getLogoSrc();
+  const doRender=(img)=>{
+    const canvas=buildRoundCanvas(r,img);
+    if(!canvas) return;
+    const link=document.createElement('a');
+    link.download=`americano_round_${r+1}.png`;
+    link.href=canvas.toDataURL('image/png');
+    link.click();
+  };
+  if(logoSrc){const img=new Image();img.onload=()=>doRender(img);img.onerror=()=>doRender(null);img.src=logoSrc;}
+  else doRender(null);
+}
+
+// ── Export Fixtures ──────────────────────────────────────────────────────
+function buildFixturesWorkbook() {
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1: Settings
+  const wsSettings = XLSX.utils.aoa_to_sheet([
+    ['Setting','Value'],
+    ['Questions Per Set', numQuestions],
+    ['Points Per Question', pointsPerQuestion],
+    ['Max Score Override', numQuestionsOverride||''],
+  ]);
+  wsSettings['!cols'] = [{wch:24},{wch:14}];
+  XLSX.utils.book_append_sheet(wb, wsSettings, 'Settings');
+
+  // Sheet 2: Players
+  const playersData = [['Slot','Name','Ghost','Extra Name','Pairs With (slot #)']];
+  players.forEach((p,i)=>{
+    const exIdx = extraForBase(i);
+    const ex = exIdx!==null ? extras[exIdx-16] : null;
+    playersData.push([i+1, p, ghosts[i]?'YES':'', ex?ex.name:'', ex?ex.baseIndex+1:'']);
+  });
+  const wsPlayers = XLSX.utils.aoa_to_sheet(playersData);
+  wsPlayers['!cols'] = [{wch:6},{wch:28},{wch:6},{wch:24},{wch:16}];
+  XLSX.utils.book_append_sheet(wb, wsPlayers, 'Players');
+
+  // Sheet 3: Drop Outs
+  const doHeader = ['Player','Name',...Array.from({length:15},(_,r)=>`Round ${r+1}`)];
+  const doData = [doHeader];
+  for(let pi=0;pi<16;pi++){
+    const row = [pi+1, players[pi]];
+    for(let r=0;r<15;r++) row.push(dropouts[pi]&&dropouts[pi][r]?1:0);
+    doData.push(row);
+  }
+  extras.forEach((ex,ei)=>{
+    if(!ex||!ex.name||ex.baseIndex===null) return;
+    const idx=16+ei, row=[`E${ei+1}`, ex.name];
+    for(let r=0;r<15;r++) row.push(dropouts[idx]&&dropouts[idx][r]?1:0);
+    doData.push(row);
+  });
+  const wsDo = XLSX.utils.aoa_to_sheet(doData);
+  wsDo['!cols'] = [{wch:6},{wch:28},...Array(15).fill({wch:8})];
+  XLSX.utils.book_append_sheet(wb, wsDo, 'Drop Outs');
+
+  // Sheet 4: Fixtures
+  const fixData = [['Round','Court','Team A P1','Team A P2','Team B P1','Team B P2']];
+  for(let r=0;r<15;r++){
+    if(!schedule[r]) continue;
+    for(let c=0;c<4;c++){
+      const m=schedule[r][c];
+      fixData.push([r+1,c+1,players[m.teamA[0]],players[m.teamA[1]],players[m.teamB[0]],players[m.teamB[1]]]);
+    }
+  }
+  const wsFix = XLSX.utils.aoa_to_sheet(fixData);
+  wsFix['!cols'] = [{wch:6},{wch:6},{wch:26},{wch:26},{wch:26},{wch:26}];
+  XLSX.utils.book_append_sheet(wb, wsFix, 'Fixtures');
+
+  // Sheet 5: Scores (with calculated reference columns — not used on import)
+  const scHeader = ['Round','Court','Team A P1','A1 Score','Team A P2','A2 Score',
+    'Extra A1 Name','EA1 Score','Extra A2 Name','EA2 Score',
+    'Team B P1','B1 Score','Team B P2','B2 Score',
+    'Extra B1 Name','EB1 Score','Extra B2 Name','EB2 Score',
+    '── CALCULATED ──','Team A Total','Team B Total','Team A Pts','Team B Pts','Result'];
+  const scData = [scHeader];
+  for(let r=0;r<15;r++){
+    if(!schedule[r]) continue;
+    for(let c=0;c<4;c++){
+      const m=schedule[r][c];
+      const sc=scores[r]?scores[r][c]:{};
+      const [piA1,piA2,piB1,piB2]=[m.teamA[0],m.teamA[1],m.teamB[0],m.teamB[1]];
+      const exA1=extraForBase(piA1),exA2=extraForBase(piA2),exB1=extraForBase(piB1),exB2=extraForBase(piB2);
+      const sv=v=>v!==undefined&&v!==''?v:'';
+      const exRaw=k=>sc&&sc[k]!==undefined&&sc[k]!==null&&sc[k]!==''?sc[k]:'';
+      const rEA1=exA1!==null?exRaw('ea1'):'', rEA2=exA2!==null?exRaw('ea2'):'';
+      const rEB1=exB1!==null?exRaw('eb1'):'', rEB2=exB2!==null?exRaw('eb2'):'';
+      const abA1=isSlotAbsent(piA1,r),abA2=isSlotAbsent(piA2,r);
+      const abB1=isSlotAbsent(piB1,r),abB2=isSlotAbsent(piB2,r);
+      const rawA1=abA1?0:sv(sc.a1), rawA2=abA2?0:sv(sc.a2);
+      const rawB1=abB1?0:sv(sc.b1), rawB2=abB2?0:sv(sc.b2);
+      // Only calculate if both teams have all scores filled
+      const aFilled=(abA1||(rawA1!==''&&rawA1!==undefined))&&(abA2||(rawA2!==''&&rawA2!==undefined));
+      const bFilled=(abB1||(rawB1!==''&&rawB1!==undefined))&&(abB2||(rawB2!==''&&rawB2!==undefined));
+      const allFilled=aFilled&&bFilled;
+      const doA1=dropouts[piA1]&&dropouts[piA1][r], doA2=dropouts[piA2]&&dropouts[piA2][r];
+      const doB1=dropouts[piB1]&&dropouts[piB1][r], doB2=dropouts[piB2]&&dropouts[piB2][r];
+      const forcedDraw=allFilled&&((abA1&&abA2)||(abB1&&abB2)||
+        (ghosts[piA1]&&doA2)||(ghosts[piA2]&&doA1)||(ghosts[piB1]&&doB2)||(ghosts[piB2]&&doB1));
+      let sA='', sB='', tpA='', tpB='', result='';
+      if(allFilled){
+        sA=teamTotal(piA1,piA2,rawA1,rawA2,r,rEA1,rEA2);
+        sB=teamTotal(piB1,piB2,rawB1,rawB2,r,rEB1,rEB2);
+        const pts=forcedDraw?{tpA:effectivePot().base,tpB:effectivePot().base}:calcBothPts(sA,sB);
+        tpA=pts.tpA; tpB=pts.tpB;
+        result=forcedDraw?'Forced Draw':sA>sB?'Team A Win':sB>sA?'Team B Win':'Draw';
+      }
+      scData.push([r+1,c+1,
+        players[piA1],sv(sc.a1),players[piA2],sv(sc.a2),
+        exA1!==null?extras[exA1-16].name:'',exA1!==null?sv(sc.ea1):'',
+        exA2!==null?extras[exA2-16].name:'',exA2!==null?sv(sc.ea2):'',
+        players[piB1],sv(sc.b1),players[piB2],sv(sc.b2),
+        exB1!==null?extras[exB1-16].name:'',exB1!==null?sv(sc.eb1):'',
+        exB2!==null?extras[exB2-16].name:'',exB2!==null?sv(sc.eb2):'',
+        '────',sA,sB,tpA,tpB,result,
+      ]);
+    }
+  }
+  const wsSc = XLSX.utils.aoa_to_sheet(scData);
+  wsSc['!cols'] = [{wch:6},{wch:6},...Array(16).fill({wch:16}),{wch:14},{wch:12},{wch:12},{wch:12},{wch:12},{wch:14}];
+  XLSX.utils.book_append_sheet(wb, wsSc, 'Scores');
+
+  // Sheet 6: Team Stats leaderboard
+  if(tournamentGenerated){
+    try{
+      // Re-compute team stats for export
+      const tsStats={};
+      players.forEach((p,i)=>{ if(!ghosts[i]) tsStats[i]={name:p,played:0,wins:0,losses:0,draws:0,notPlayed:0,teamPts:0,indivScore:0}; });
+      extras.forEach((ex,ei)=>{ if(ex&&ex.name&&ex.baseIndex!==null) tsStats[16+ei]={name:ex.name,played:0,wins:0,losses:0,draws:0,notPlayed:0,teamPts:0,indivScore:0}; });
+      const { base:tsBase } = effectivePot();
+      for(let r=0;r<15;r++){
+        if(!scores[r]||!schedule[r]) continue;
+        for(let c=0;c<4;c++){
+          const sc=scores[r][c], match=schedule[r][c];
+          const [piA1,piA2,piB1,piB2]=[match.teamA[0],match.teamA[1],match.teamB[0],match.teamB[1]];
+          const exA1=extraForBase(piA1),exA2=extraForBase(piA2),exB1=extraForBase(piB1),exB2=extraForBase(piB2);
+          const exRaw=k=>sc[k]!==undefined&&sc[k]!==null&&sc[k]!==''?sc[k]:'';
+          const rawEA1=exA1!==null?exRaw('ea1'):'',rawEA2=exA2!==null?exRaw('ea2'):'';
+          const rawEB1=exB1!==null?exRaw('eb1'):'',rawEB2=exB2!==null?exRaw('eb2'):'';
+          const abA1=isSlotAbsent(piA1,r),abA2=isSlotAbsent(piA2,r),abB1=isSlotAbsent(piB1,r),abB2=isSlotAbsent(piB2,r);
+          const doA1=dropouts[piA1]&&dropouts[piA1][r],doA2=dropouts[piA2]&&dropouts[piA2][r];
+          const doB1=dropouts[piB1]&&dropouts[piB1][r],doB2=dropouts[piB2]&&dropouts[piB2][r];
+          const doExA1=exA1!==null&&dropouts[exA1]&&dropouts[exA1][r];
+          const doExA2=exA2!==null&&dropouts[exA2]&&dropouts[exA2][r];
+          const doExB1=exB1!==null&&dropouts[exB1]&&dropouts[exB1][r];
+          const doExB2=exB2!==null&&dropouts[exB2]&&dropouts[exB2][r];
+          const rawA1=abA1?0:(sc.a1===''?'':sc.a1),rawA2=abA2?0:(sc.a2===''?'':sc.a2);
+          const rawB1=abB1?0:(sc.b1===''?'':sc.b1),rawB2=abB2?0:(sc.b2===''?'':sc.b2);
+          const slotOk=(pi,raw)=>isSlotAbsent(pi,r)||(!(isAbsent(pi,r))&&raw!==''&&raw!==undefined)||isAbsent(pi,r);
+          const aFilled=(abA1||(rawA1!==''&&rawA1!==undefined))&&(abA2||(rawA2!==''&&rawA2!==undefined));
+          const bFilled=(abB1||(rawB1!==''&&rawB1!==undefined))&&(abB2||(rawB2!==''&&rawB2!==undefined));
+          if(!aFilled||!bFilled) continue;
+          const forcedDraw=(abA1&&abA2)||(abB1&&abB2)||(ghosts[piA1]&&doA2)||(ghosts[piA2]&&doA1)||(ghosts[piB1]&&doB2)||(ghosts[piB2]&&doB1);
+          const sA=teamTotal(piA1,piA2,rawA1,rawA2,r,rawEA1,rawEA2);
+          const sB=teamTotal(piB1,piB2,rawB1,rawB2,r,rawEB1,rawEB2);
+          const {tpA,tpB}=forcedDraw?{tpA:tsBase,tpB:tsBase}:calcBothPts(sA,sB);
+          const aWin=!forcedDraw&&sA>sB,bWin=!forcedDraw&&sB>sA;
+          const combined=sA+sB;
+          const tsAccum=(pi,eIdx,rawBase,rawEx,isDo,isDoEx,tp,win,lose)=>{
+            if(ghosts[pi]) return;
+            const baseAbs=isAbsent(pi,r);
+            const exMiss=(rawEx===''||rawEx===undefined||rawEx===null);
+            if(tsStats[pi]!==undefined){
+              const s=tsStats[pi];
+              if(isDo){s.notPlayed++;}
+              else if(!baseAbs){s.played++;s.teamPts+=combined;s.indivScore+=parseNum(rawBase);if(win)s.wins++;else if(lose)s.losses++;else s.draws++;}
+            }
+            if(eIdx!==null&&tsStats[eIdx]!==undefined&&!exMiss){
+              const se=tsStats[eIdx];
+              const extraAbs=dropouts[eIdx]&&dropouts[eIdx][r];
+              if(isDoEx){se.notPlayed++;}
+              else if(!extraAbs){se.played++;se.teamPts+=combined;se.indivScore+=parseNum(rawEx);if(win)se.wins++;else if(lose)se.losses++;else se.draws++;}
+            }
+          };
+          tsAccum(piA1,exA1,rawA1,rawEA1,doA1,doExA1,tpA,aWin,bWin);
+          tsAccum(piA2,exA2,rawA2,rawEA2,doA2,doExA2,tpA,aWin,bWin);
+          tsAccum(piB1,exB1,rawB1,rawEB1,doB1,doExB1,tpB,bWin,aWin);
+          tsAccum(piB2,exB2,rawB2,rawEB2,doB2,doExB2,tpB,bWin,aWin);
+        }
+      }
+      const tsRows=Object.values(tsStats).sort((a,b)=>{
+        if(b.teamPts!==a.teamPts) return b.teamPts-a.teamPts;
+        if(b.wins!==a.wins) return b.wins-a.wins;
+        if(a.losses!==b.losses) return a.losses-b.losses;
+        if(b.draws!==a.draws) return b.draws-a.draws;
+        return b.indivScore-a.indivScore;
+      });
+      const tsData=[['Rank','Player','P','W','L','D','N/P','Team Pts','Indiv Score']];
+      tsRows.forEach((s,i)=>tsData.push([i+1,s.name,s.played,s.wins,s.losses,s.draws,s.notPlayed>0?s.notPlayed:'',s.teamPts,s.indivScore]));
+      const wsTs=XLSX.utils.aoa_to_sheet(tsData);
+      wsTs['!cols']=[{wch:6},{wch:28},{wch:6},{wch:6},{wch:6},{wch:6},{wch:6},{wch:10},{wch:12}];
+      XLSX.utils.book_append_sheet(wb,wsTs,'Team Stats');
+    }catch(e){}
+  }
+
+  return wb;
+}
+
+function exportFixtures() {
+  if(!tournamentGenerated){alert('Generate the tournament first.');return;}
+  XLSX.writeFile(buildFixturesWorkbook(), 'americano_fixtures.xlsx');
+}
+
+// ── Import Fixtures ──────────────────────────────────────────────────────
+function importFixtures(input) {
+  if(!input.files||!input.files[0]) return;
+  const file = input.files[0];
+  input.value='';
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const wb = XLSX.read(e.target.result, {type:'binary'});
+      let imported = {settings:0, players:0, dropouts:0, scores:0};
+
+      // ── Settings sheet ─────────────────────────────────────────────────
+      if(wb.SheetNames.includes('Settings')){
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets['Settings'], {header:1});
+        rows.forEach(row=>{
+          if(!row[0]) return;
+          const key = String(row[0]).trim().toLowerCase();
+          const val = row[1];
+          if(key.includes('questions per')||key==='questions per set'){
+            const n=parseInt(val); if(!isNaN(n)&&n>0){numQuestions=n;document.getElementById('num-questions').value=n;imported.settings++;}
+          } else if(key.includes('points per')){
+            const n=parseInt(val); if(!isNaN(n)&&n>0){pointsPerQuestion=n;document.getElementById('num-ppq').value=n;imported.settings++;}
+          } else if(key.includes('override')){
+            const n=parseInt(val);
+            numQuestionsOverride=(!isNaN(n)&&n>0)?n:null;
+            document.getElementById('num-questions-override').value=numQuestionsOverride||'';
+            imported.settings++;
+          }
+        });
+      }
+
+      // ── Players sheet ──────────────────────────────────────────────────
+      if(wb.SheetNames.includes('Players')){
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets['Players'], {header:1});
+        // Reset extras first
+        extras=[null,null,null,null];
+        let extraSlot=0;
+        rows.slice(1).forEach(row=>{
+          const slot=parseInt(row[0]);
+          if(isNaN(slot)||slot<1||slot>16) return;
+          const pi=slot-1;
+          const name=row[1]!==undefined?String(row[1]).trim():'';
+          const isGhost=String(row[2]||'').trim().toUpperCase()==='YES';
+          const exName=row[3]!==undefined?String(row[3]).trim():'';
+          const exBase=parseInt(row[4]);
+          if(name) {players[pi]=name; imported.players++;}
+          ghosts[pi]=isGhost;
+          if(exName&&!isNaN(exBase)&&exBase>=1&&exBase<=16&&extraSlot<4){
+            extras[extraSlot]={name:exName, baseIndex:exBase-1};
+            extraSlot++;
+          }
+        });
+        buildPlayerInputs();
+        buildExtraPlayerInputs();
+        rebuildDropoutsForExtras();
+      }
+
+      // ── Drop Outs sheet ────────────────────────────────────────────────
+      if(wb.SheetNames.includes('Drop Outs')){
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets['Drop Outs'], {header:1});
+        rows.slice(1).forEach(row=>{
+          const slotRaw=String(row[0]||'').trim();
+          const isExtra=/^E[1-4]$/i.test(slotRaw);
+          const idx=isExtra?15+parseInt(slotRaw.slice(1)):parseInt(slotRaw)-1;
+          if(isNaN(idx)||idx<0||idx>19) return;
+          if(!dropouts[idx]) dropouts[idx]=Array(15).fill(false);
+          for(let r=0;r<15;r++){
+            const v=row[2+r];
+            dropouts[idx][r]=v===1||v==='1'||v===true;
+          }
+          imported.dropouts++;
+        });
+      }
+
+      // ── Scores sheet ───────────────────────────────────────────────────
+      if(wb.SheetNames.includes('Scores')){
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets['Scores'], {header:1});
+        rows.slice(1).forEach(row=>{
+          const r=parseInt(row[0])-1, c=parseInt(row[1])-1;
+          if(isNaN(r)||isNaN(c)||r<0||r>14||c<0||c>3) return;
+          if(!scores[r]) scores[r]={};
+          if(!scores[r][c]) scores[r][c]={a1:'',a2:'',b1:'',b2:''};
+          const sv=(v)=>v!==undefined&&v!==''?v:'';
+          scores[r][c].a1=sv(row[3]); scores[r][c].a2=sv(row[5]);
+          scores[r][c].b1=sv(row[11]); scores[r][c].b2=sv(row[13]);
+          // Extra scores (cols 7,9,15,17)
+          if(row[7]!==undefined&&row[7]!=='') scores[r][c].ea1=row[7];
+          if(row[9]!==undefined&&row[9]!=='') scores[r][c].ea2=row[9];
+          if(row[15]!==undefined&&row[15]!=='') scores[r][c].eb1=row[15];
+          if(row[17]!==undefined&&row[17]!=='') scores[r][c].eb2=row[17];
+          imported.scores++;
+        });
+      }
+
+      // Note: schedule is not imported — always use the generated W(16) schedule.
+      // If no schedule exists yet, we can't restore play state.
+      updateQuestionInfo();
+      saveState();
+      updateLeaderboard();
+      if(tournamentGenerated){
+        renderPlayPage();
+        renderScoreSheet();
+      }
+
+      const a=document.getElementById('play-alert');
+      const parts=[];
+      if(imported.settings) parts.push(`${imported.settings} settings`);
+      if(imported.players) parts.push(`${imported.players} player names`);
+      if(imported.dropouts) parts.push(`${imported.dropouts} dropout rows`);
+      if(imported.scores) parts.push(`${imported.scores} score rows`);
+      a.textContent=`✓ Import complete — ${parts.join(', ') || 'nothing changed'}.`;
+      a.style.display='block';
+      setTimeout(()=>a.style.display='none',4500);
+    }catch(err){
+      alert('Import Fixtures failed: '+err.message);
+    }
+  };
+  reader.readAsBinaryString(file);
+}
+
+function launchConfetti() {
+  document.querySelectorAll('.confetti-canvas').forEach(canvas => {
+    const ctx = canvas.getContext('2d');
+    const rect = canvas.getBoundingClientRect();
+    const W = Math.round(rect.width) || canvas.offsetWidth;
+    const H = Math.round(rect.height) || canvas.offsetHeight;
+    if(!W || !H) return; // skip if still not laid out
+    canvas.width = W; canvas.height = H;
+    const colours = ['#00d4ff','#7c3aed','#27ae60','#e8b43a','#ffffff','#f472b6'];
+    const pieces = Array.from({length: 60}, () => ({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      w: Math.random() * 8 + 4,
+      h: Math.random() * 4 + 2,
+      col: colours[Math.floor(Math.random() * colours.length)],
+      rot: Math.random() * Math.PI * 2,
+      vx: (Math.random() - 0.5) * 2,
+      vy: Math.random() * 3 + 1.5,
+      vr: (Math.random() - 0.5) * 0.15,
+    }));
+    // Store raf id on canvas so it can be cancelled if card closes
+    if (canvas._rafId) cancelAnimationFrame(canvas._rafId);
+    function tick() {
+      ctx.clearRect(0, 0, W, H);
+      pieces.forEach(p => {
+        p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+        // Wrap back to top when off bottom
+        if (p.y > H + 10) { p.y = -10; p.x = Math.random() * W; }
+        if (p.x < -10) p.x = W + 10;
+        if (p.x > W + 10) p.x = -10;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = p.col;
+        ctx.globalAlpha = 0.85;
+        ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+        ctx.restore();
+      });
+      canvas._rafId = requestAnimationFrame(tick);
+    }
+    tick();
+  });
+}
+
+// ===================== SCORE SHEET =====================
+let ssRound = 0;
+
+function renderScoreSheet() {
+  if(!tournamentGenerated){
+    document.getElementById('ss-content').innerHTML='<div class="alert">Please set up and generate the tournament first.</div>';
+    document.getElementById('ss-round-bar').innerHTML='';
+    return;
+  }
+
+  // Round selector
+  const numRounds = 15;
+  const numCourts = 4;
+  const rb = document.getElementById('ss-round-bar');
+  rb.innerHTML = '';
+  for(let r=0;r<numRounds;r++){
+    const b = document.createElement('button');
+    b.className = 'round-btn' + (r===ssRound?' active':'') + (isRoundComplete(r)&&r!==ssRound?' complete':'');
+    b.textContent = r+1;
+    b.onclick=(()=>{const rr=r;return()=>{ssRound=rr;renderScoreSheet();};})();
+    rb.appendChild(b);
+  }
+
+  document.getElementById('ss-subtitle').textContent = `Round ${ssRound+1} of ${numRounds}`;
+
+  // Build playerIndex → {court, key, partner, opponents} lookup
+  const round = schedule[ssRound];
+  const playerMap = {};
+  for(let c=0;c<numCourts;c++){
+    const m = round[c];
+    const [a1,a2,b1,b2] = [m.teamA[0],m.teamA[1],m.teamB[0],m.teamB[1]];
+    playerMap[a1] = {court:c, key:'a1', partner:a2, opponents:[b1,b2]};
+    playerMap[a2] = {court:c, key:'a2', partner:a1, opponents:[b1,b2]};
+    playerMap[b1] = {court:c, key:'b1', partner:b2, opponents:[a1,a2]};
+    playerMap[b2] = {court:c, key:'b2', partner:b1, opponents:[a1,a2]};
+  }
+
+  // Return display name for a base player index including their extra partner suffix
+  const displayName = (oi) => {
+    if(ghosts[oi]) return '👻 Ghost';
+    const isOut = dropouts[oi] && dropouts[oi][ssRound];
+    const base = players[oi] + (isOut ? ' (out)' : '');
+    const eIdx = extraForBase(oi);
+    if(eIdx !== null) {
+      const exOut = dropouts[eIdx] && dropouts[eIdx][ssRound];
+      return base + ' +' + extras[eIdx-16].name + (exOut ? ' (out)' : '');
+    }
+    return base;
+  };
+
+  let html = `<div class="ss-list">
+    <div class="ss-list-header">
+      <span>#</span><span>Player</span><span style="text-align:center">Score</span>
+      <span></span>
+      <span>Played With</span><span>Played Against</span>
+    </div>`;
+
+  // Build one unified list: 16 base players first, then active extra players
+  const allRows = [];
+  for(let pi=0; pi<16; pi++){
+    allRows.push({type:'base', pi});
+  }
+  extras.forEach((ex, ei) => {
+    if(ex && ex.name && ex.baseIndex !== null) allRows.push({type:'extra', ei, ex});
+  });
+
+  for(const row of allRows){
+    if(row.type === 'base'){
+      const pi = row.pi;
+      const info = playerMap[pi];
+      const isGhostPlayer = ghosts[pi];
+      const isDropoutPlayer = !isGhostPlayer && dropouts[pi][ssRound];
+      const val = (isGhostPlayer||isDropoutPlayer) ? 0 : (info ? scores[ssRound][info.court][info.key] : '');
+      const partnerName = (!isGhostPlayer && info) ? displayName(info.partner) : '—';
+      const oppNames = (!isGhostPlayer && info)
+        ? info.opponents.map(oi => displayName(oi)).join(' & ')
+        : '—';
+      const dimStyle = (isGhostPlayer||isDropoutPlayer) ? 'opacity:0.6' : '';
+      // Show if this player has an extra
+      const exIdx = extraForBase(pi);
+      const exTag = exIdx !== null ? `<span style="font-size:0.65rem;color:var(--accent);margin-left:4px">+${extras[exIdx-16].name}</span>` : '';
+      html += `<div class="ss-list-row" style="${dimStyle}">
+        <span class="ss-num">${pi+1}</span>
+        <span class="ss-name" style="${isGhostPlayer?'font-style:italic;color:var(--muted)':isDropoutPlayer?'color:var(--lose)':''}">${players[pi]}${exTag}${isDropoutPlayer?' <span style="font-size:0.7rem">(out)</span>':''}</span>
+        <div style="display:flex;justify-content:center">
+          ${isGhostPlayer
+            ? `<span style="width:68px;text-align:center;background:rgba(138,155,176,0.1);border:1px dashed rgba(138,155,176,0.3);border-radius:6px;padding:0.4rem;color:var(--muted);font-size:0.9rem;display:inline-block">👻 0</span>`
+            : isDropoutPlayer
+            ? `<span style="width:68px;text-align:center;background:rgba(192,57,43,0.12);border:1px dashed rgba(192,57,43,0.4);border-radius:6px;padding:0.4rem;color:var(--lose);font-size:0.9rem;display:inline-block">OUT — 0</span>`
+            : `<input type="number" min="0" max="${numQuestionsOverride || numQuestions * pointsPerQuestion}" class="ss-score-input" id="ss-inp-${pi}"
+                value="${val}" placeholder="—"
+                oninput="ssSetScore(${pi},this.value)"
+                onkeydown="ssKeyNav(event,${pi})">`
+          }
+        </div>
+        <span></span>
+        <span class="ss-partner-badge" title="${partnerName}">${partnerName}</span>
+        <span class="ss-opponent-badge" title="${oppNames}">${oppNames}</span>
+      </div>`;
+    } else {
+      // Extra player row
+      const {ei, ex} = row;
+      const extraSlotIdx = 16 + ei; // index into dropouts
+      const basePi = ex.baseIndex;
+      const info = playerMap[basePi];
+      const isDropoutExtra = dropouts[extraSlotIdx] && dropouts[extraSlotIdx][ssRound];
+      const isBaseDropout = dropouts[basePi][ssRound];
+      // Extra score key: 'ea1','ea2','eb1','eb2' mirroring base key
+      const eKey = info ? 'e'+info.key : null;
+      const rawEVal = info && eKey ? scores[ssRound][info.court][eKey] : undefined;
+      const val = (isDropoutExtra) ? 0 : (rawEVal!==undefined&&rawEVal!==null&&rawEVal!==''?rawEVal:'');
+      const partnerName = info ? displayName(info.partner) : '—';
+      const oppNames = info ? info.opponents.map(oi => displayName(oi)).join(' & ') : '—';
+      const dimStyle = isDropoutExtra ? 'opacity:0.6' : '';
+      html += `<div class="ss-list-row" style="${dimStyle};background:rgba(0,212,255,0.04);border-left:2px solid rgba(0,212,255,0.25)">
+        <span class="ss-num" style="color:var(--accent)">E${ei+1}</span>
+        <span class="ss-name" style="${isDropoutExtra?'color:var(--lose)':'color:var(--accent)'}">${ex.name}${isDropoutExtra?' <span style="font-size:0.7rem">(out)</span>':''}<span style="font-size:0.65rem;color:var(--muted);margin-left:4px">↳ ${players[basePi]}</span></span>
+        <div style="display:flex;justify-content:center">
+          ${isDropoutExtra
+            ? `<span style="width:68px;text-align:center;background:rgba(192,57,43,0.12);border:1px dashed rgba(192,57,43,0.4);border-radius:6px;padding:0.4rem;color:var(--lose);font-size:0.9rem;display:inline-block">OUT — 0</span>`
+            : `<input type="number" min="0" max="${numQuestionsOverride || numQuestions * pointsPerQuestion}" class="ss-score-input" id="ss-inp-e${ei}"
+                value="${val}" placeholder="—"
+                oninput="ssSetExtraScore(${ei},${info?info.court:0},'${info?info.key:'a1'}',this.value)"
+                onkeydown="ssKeyNavExtra(event,${ei})">`
+          }
+        </div>
+        <span></span>
+        <span class="ss-partner-badge" title="${partnerName}">${partnerName}</span>
+        <span class="ss-opponent-badge" title="${oppNames}">${oppNames}</span>
+      </div>`;
+    }
+  }
+
+  html += '</div>';
+  document.getElementById('ss-content').innerHTML = html;
+
+  // Focus first empty non-absent input (base players then extras)
+  for(let pi=0;pi<16;pi++){
+    if(ghosts[pi]||dropouts[pi][ssRound]) continue;
+    const inp = document.getElementById('ss-inp-'+pi);
+    if(inp && inp.value===''){inp.focus();break;}
+  }
+}
+
+function ssSetScore(pi, val) {
+  if(!tournamentGenerated) return;
+  const numCourts = 4;
+  const round = schedule[ssRound];
+  for(let c=0;c<numCourts;c++){
+    const m = round[c];
+    const keys = ['a1','a2','b1','b2'];
+    const pis = [m.teamA[0], m.teamA[1], m.teamB[0], m.teamB[1]];
+    const idx = pis.indexOf(pi);
+    if(idx !== -1){
+      scores[ssRound][c][keys[idx]] = val===''?'':val;
+      saveState();
+      const btns = document.querySelectorAll('#ss-round-bar .round-btn');
+      if(btns[ssRound]) btns[ssRound].classList.toggle('complete', isRoundComplete(ssRound));
+      updateLeaderboard();
+      break;
+    }
+  }
+}
+
+function ssSetExtraScore(ei, court, baseKey, val) {
+  if(!tournamentGenerated) return;
+  const eKey = 'e' + baseKey;
+  scores[ssRound][court][eKey] = val===''?'':val;
+  saveState();
+  const btns = document.querySelectorAll('#ss-round-bar .round-btn');
+  if(btns[ssRound]) btns[ssRound].classList.toggle('complete', isRoundComplete(ssRound));
+  updateLeaderboard();
+}
+
+function ssKeyNav(event, pi) {
+  if(event.key==='Enter'){
+    event.preventDefault();
+    // Try next base player
+    for(let next=pi+1; next<16; next++){
+      if(ghosts[next]||dropouts[next][ssRound]) continue;
+      const inp = document.getElementById('ss-inp-'+next);
+      if(inp){inp.focus();inp.select();return;}
+    }
+    // Then try first extra player
+    for(let ei=0;ei<4;ei++){
+      if(!extras[ei]||extras[ei].baseIndex===null) continue;
+      if(dropouts[16+ei]&&dropouts[16+ei][ssRound]) continue;
+      const inp = document.getElementById('ss-inp-e'+ei);
+      if(inp){inp.focus();inp.select();return;}
+    }
+  }
+}
+
+function ssKeyNavExtra(event, ei) {
+  if(event.key==='Enter'){
+    event.preventDefault();
+    // Move to next active extra
+    for(let next=ei+1;next<4;next++){
+      if(!extras[next]||extras[next].baseIndex===null) continue;
+      if(dropouts[16+next]&&dropouts[16+next][ssRound]) continue;
+      const inp = document.getElementById('ss-inp-e'+next);
+      if(inp){inp.focus();inp.select();return;}
+    }
+  }
+}
+
+function buildScoresWorkbook() {
+  const keys = ['a1','a2','b1','b2'];
+  const rows = [];
+  const header = ['Team','Name','Pairs With'];
+  for(let r=0;r<15;r++) header.push('Round '+(r+1));
+  rows.push(header);
+
+  for(let pi=0;pi<16;pi++){
+    const row = [pi+1, players[pi], ''];
+    for(let r=0;r<15;r++){
+      let val = '';
+      if(schedule[r]){
+        for(let c=0;c<4;c++){
+          const m=schedule[r][c];
+          const idx=[m.teamA[0],m.teamA[1],m.teamB[0],m.teamB[1]].indexOf(pi);
+          if(idx!==-1){
+            const k=keys[idx];
+            val = scores[r]&&scores[r][c]&&scores[r][c][k]!==undefined&&scores[r][c][k]!==''
+              ? scores[r][c][k] : '';
+            break;
+          }
+        }
+      }
+      row.push(val);
+    }
+    rows.push(row);
+  }
+
+  extras.forEach((ex,ei)=>{
+    if(!ex||!ex.name||ex.baseIndex===null) return;
+    const eKeys = {a1:'ea1',a2:'ea2',b1:'eb1',b2:'eb2'};
+    const row = ['E'+(ei+1), ex.name, ex.baseIndex+1];
+    for(let r=0;r<15;r++){
+      let val='';
+      if(schedule[r]){
+        for(let c=0;c<4;c++){
+          const m=schedule[r][c];
+          const idx=[m.teamA[0],m.teamA[1],m.teamB[0],m.teamB[1]].indexOf(ex.baseIndex);
+          if(idx!==-1){
+            const ek=eKeys[keys[idx]];
+            val=scores[r]&&scores[r][c]&&scores[r][c][ek]!==undefined&&scores[r][c][ek]!==''
+              ?scores[r][c][ek]:'';
+            break;
+          }
+        }
+      }
+      row.push(val);
+    }
+    rows.push(row);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{wch:8},{wch:28},{wch:12},...Array(15).fill({wch:10})];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Scores');
+  return wb;
+}
+
+function ssExport() {
+  if(!tournamentGenerated){alert('Generate the tournament first.');return;}
+  XLSX.writeFile(buildScoresWorkbook(), 'americano_scores.xlsx');
+}
+
+function ssImport(input) {
+  if(!input.files||!input.files[0]) return;
+  const file = input.files[0];
+  input.value=''; // reset so same file can be re-imported
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const wb = XLSX.read(e.target.result, {type:'binary'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1});
+      if(rows.length < 2){alert('No data found in file.');return;}
+
+      // rows[0] = header, rows[1..] = data
+      let imported=0, nameUpdates=0;
+      for(let i=1;i<rows.length;i++){
+        const row=rows[i];
+        if(!row||!row[0]) continue;
+        const teamId = String(row[0]).trim();  // '1'-'16' or 'E1'-'E4'
+        const name   = row[1]!==undefined ? String(row[1]).trim() : '';
+        const pairsWith = row[2]!==undefined ? String(row[2]).trim() : '';
+
+        if(/^E[1-4]$/i.test(teamId)){
+          // Extra player
+          const ei = parseInt(teamId.slice(1))-1;
+          const baseNum = parseInt(pairsWith)-1; // convert to 0-indexed
+          if(name){
+            if(!extras[ei]) extras[ei]={name:'',baseIndex:null};
+            extras[ei].name = name;
+            if(!isNaN(baseNum)&&baseNum>=0&&baseNum<16) extras[ei].baseIndex=baseNum;
+          }
+          // Import scores for rounds (columns 4+)
+          for(let r=0;r<15;r++){
+            const val=row[3+r];
+            if(val===undefined||val==='') continue;
+            const num=parseInt(val);
+            if(isNaN(num)) continue;
+            // Find court for base player in round r
+            if(!schedule[r]) continue;
+            const bp=extras[ei]?extras[ei].baseIndex:null;
+            if(bp===null) continue;
+            for(let c=0;c<4;c++){
+              const m=schedule[r][c];
+              const idx=[m.teamA[0],m.teamA[1],m.teamB[0],m.teamB[1]].indexOf(bp);
+              if(idx!==-1){
+                if(!scores[r]) scores[r]={};
+                if(!scores[r][c]) scores[r][c]={a1:'',a2:'',b1:'',b2:''};
+                const eKey=['ea1','ea2','eb1','eb2'][idx];
+                scores[r][c][eKey]=num; imported++;
+                break;
+              }
+            }
+          }
+        } else {
+          // Base player
+          const pi=parseInt(teamId)-1;
+          if(isNaN(pi)||pi<0||pi>15) continue;
+          if(name&&name!==players[pi]){players[pi]=name;nameUpdates++;}
+          const scoreKeys=['a1','a2','b1','b2'];
+          for(let r=0;r<15;r++){
+            const val=row[3+r];
+            if(val===undefined||val==='') continue;
+            const num=parseInt(val);
+            if(isNaN(num)) continue;
+            if(!schedule[r]) continue;
+            for(let c=0;c<4;c++){
+              const m=schedule[r][c];
+              const idx=[m.teamA[0],m.teamA[1],m.teamB[0],m.teamB[1]].indexOf(pi);
+              if(idx!==-1){
+                if(!scores[r]) scores[r]={};
+                if(!scores[r][c]) scores[r][c]={a1:'',a2:'',b1:'',b2:''};
+                scores[r][c][scoreKeys[idx]]=num; imported++;
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      rebuildDropoutsForExtras();
+      saveState();
+      buildPlayerInputs();
+      buildExtraPlayerInputs();
+      updateLeaderboard();
+      renderScoreSheet();
+      if(document.getElementById('page-play').classList.contains('active')) renderPlayPage();
+      const a=document.getElementById('ss-alert');
+      a.textContent=`✓ Import complete — ${imported} scores updated${nameUpdates>0?', '+nameUpdates+' names updated':''}.`;
+      a.style.display='block';
+      setTimeout(()=>a.style.display='none',4000);
+    }catch(err){
+      alert('Import failed: '+err.message);
+    }
+  };
+  reader.readAsBinaryString(file);
+}
+
+function ssClearRound() {
+  if(!tournamentGenerated) return;
+  if(!confirm(`Clear all scores for Round ${ssRound+1}?`)) return;
+  const numCourts = 4;
+  for(let c=0;c<numCourts;c++) scores[ssRound][c]={a1:'',a2:'',b1:'',b2:'',ea1:'',ea2:'',eb1:'',eb2:''};
+  saveState();
+  renderScoreSheet();
+  updateLeaderboard();
+}
+
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t=>{
+    const txt = t.textContent.toLowerCase().replace(/\s/g,'');
+    if(txt===id||txt===id.replace(/\s/g,'')) t.classList.add('active');
+  });
+  if(id==='play'){ ssRound=currentRound; renderPlayPage(); }
+  if(id==='scoresheet'){ ssRound=currentRound; renderScoreSheet(); }
+  if(id==='leaderboard') updateLeaderboard();
+  if(id==='fixtures') renderFixtures();
+  if(id==='dropouts') renderDropouts();
+}
+
+// ===================== DROP OUTS =====================
+function toggleDropout(pi, r) {
+  if(ghosts[pi]) return;
+  dropouts[pi][r] = !dropouts[pi][r];
+  saveState();
+  renderDropouts();
+  updateLeaderboard();
+  if(document.getElementById('page-play').classList.contains('active')) renderPlayPage();
+  if(document.getElementById('page-scoresheet').classList.contains('active')) renderScoreSheet();
+}
+
+function toggleExtraDropout(ei, r) {
+  const idx = 16 + ei;
+  if(!dropouts[idx]) dropouts[idx] = Array(15).fill(false);
+  dropouts[idx][r] = !dropouts[idx][r];
+  saveState();
+  renderDropouts();
+  updateLeaderboard();
+  if(document.getElementById('page-play').classList.contains('active')) renderPlayPage();
+  if(document.getElementById('page-scoresheet').classList.contains('active')) renderScoreSheet();
+}
+
+function renderDropouts() {
+  const el = document.getElementById('dropouts-content');
+  if(!tournamentGenerated) {
+    el.innerHTML = '<div class="alert">Generate the tournament first to manage drop outs.</div>';
+    return;
+  }
+
+  // Count total dropouts (base + extras)
+  let totalOut = 0;
+  for(let pi=0;pi<16;pi++){ if(!ghosts[pi]&&dropouts[pi]) dropouts[pi].forEach(v=>{if(v)totalOut++;}); }
+  extras.forEach((ex,ei)=>{ if(ex&&ex.baseIndex!==null&&dropouts[16+ei]) dropouts[16+ei].forEach(v=>{if(v)totalOut++;}); });
+
+  const activeExtras = extras.map((ex,ei)=>ex&&ex.name&&ex.baseIndex!==null?{ex,ei}:null).filter(Boolean);
+
+  let html = `
+    <div class="dropout-legend">
+      <span style="font-size:0.75rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.07em">Click any cell to toggle:</span>
+      <div class="dropout-legend-item">
+        <div class="dropout-legend-swatch" style="background:var(--card)"></div>
+        <span style="color:var(--muted)">Available</span>
+      </div>
+      <div class="dropout-legend-item">
+        <div class="dropout-legend-swatch" style="background:rgba(192,57,43,0.25);color:var(--lose)">✕</div>
+        <span style="color:var(--muted)">Not available</span>
+      </div>
+      <div class="dropout-legend-item">
+        <div class="dropout-legend-swatch" style="background:rgba(255,255,255,0.03)">👻</div>
+        <span style="color:var(--muted)">Ghost slot</span>
+      </div>
+      ${totalOut>0?`<span style="margin-left:auto;font-size:0.8rem;color:var(--lose);font-weight:600">${totalOut} absence${totalOut!==1?'s':''} recorded</span>`:''}
+    </div>
+    <div class="dropout-wrap">
+      <table class="dropout-table">
+        <thead>
+          <tr>
+            <th class="dropout-player-header">Player</th>
+            ${Array.from({length:15},(_,r)=>`<th class="dropout-round-header${isRoundComplete(r)?' complete':''}" title="Round ${r+1}${isRoundComplete(r)?' ✓':''}">${r+1}</th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>`;
+
+  // Base players
+  for(let pi=0; pi<16; pi++) {
+    const isGhostP = ghosts[pi];
+    const exIdx = extraForBase(pi);
+    const hasExtra = exIdx !== null;
+    html += `<tr>
+      <td class="dropout-name-cell${isGhostP?' is-ghost':''}">
+        <span>${pi+1}</span> ${players[pi]}${isGhostP?' 👻':''}${hasExtra?`<span style="font-size:0.65rem;color:var(--accent);margin-left:4px">+${extras[exIdx-16].name}</span>`:''}
+      </td>`;
+    for(let r=0; r<15; r++) {
+      if(isGhostP) {
+        html += `<td class="dropout-cell is-ghost-slot" title="Ghost player">👻</td>`;
+      } else {
+        const isOut = dropouts[pi]&&dropouts[pi][r];
+        html += `<td class="dropout-cell${isOut?' is-out':''}"
+          onclick="toggleDropout(${pi},${r})"
+          title="${players[pi]} — Round ${r+1}: ${isOut?'NOT AVAILABLE':'Available'}">
+          ${isOut?'✕':''}
+        </td>`;
+      }
+    }
+    html += '</tr>';
+  }
+
+  // Extra players
+  for(const {ex, ei} of activeExtras) {
+    const idx = 16 + ei;
+    if(!dropouts[idx]) dropouts[idx] = Array(15).fill(false);
+    html += `<tr style="background:rgba(0,212,255,0.04)">
+      <td class="dropout-name-cell" style="color:var(--accent);border-left:2px solid rgba(0,212,255,0.3)">
+        <span style="color:var(--accent)">E${ei+1}</span> ${ex.name}
+        <span style="font-size:0.65rem;color:var(--muted);margin-left:4px">↳ ${players[ex.baseIndex]}</span>
+      </td>`;
+    for(let r=0; r<15; r++) {
+      const isOut = dropouts[idx][r];
+      html += `<td class="dropout-cell${isOut?' is-out':''}"
+        onclick="toggleExtraDropout(${ei},${r})"
+        title="${ex.name} — Round ${r+1}: ${isOut?'NOT AVAILABLE':'Available'}">
+        ${isOut?'✕':''}
+      </td>`;
+    }
+    html += '</tr>';
+  }
+
+  html += '</tbody></table></div>';
+  el.innerHTML = html;
+}
+
+// ===================== FIXTURES MATRIX =====================
+let currentFixturesTab = 'vs';
+
+function showFixturesTab(tab) {
+  currentFixturesTab = tab;
+  document.getElementById('ftab-vs').classList.toggle('active', tab==='vs');
+  document.getElementById('ftab-with').classList.toggle('active', tab==='with');
+  document.getElementById('fpanel-vs').classList.toggle('active', tab==='vs');
+  document.getElementById('fpanel-with').classList.toggle('active', tab==='with');
+}
+
+function renderFixtures() {
+  if(!tournamentGenerated){
+    document.getElementById('matrix-vs').innerHTML = '<div class="alert">Generate the tournament first to see the fixture matrix.</div>';
+    document.getElementById('matrix-with').innerHTML = '';
+    return;
+  }
+
+  // Build vs[i][j] = number of times player i has played AGAINST player j
+  // Build with[i][j] = number of times player i has played WITH (partnered) player j
+  const vs   = Array.from({length:16}, ()=>Array(16).fill(0));
+  const with_ = Array.from({length:16}, ()=>Array(16).fill(0));
+
+  for(let r=0; r<15; r++){
+    if(!schedule[r]) continue;
+    for(let c=0; c<4; c++){
+      const m = schedule[r][c];
+      const [a0,a1] = m.teamA;
+      const [b0,b1] = m.teamB;
+
+      // Partners
+      with_[a0][a1]++; with_[a1][a0]++;
+      with_[b0][b1]++; with_[b1][b0]++;
+
+      // Opponents (every A vs every B)
+      vs[a0][b0]++; vs[b0][a0]++;
+      vs[a0][b1]++; vs[b1][a0]++;
+      vs[a1][b0]++; vs[b0][a1]++;
+      vs[a1][b1]++; vs[b1][a1]++;
+    }
+  }
+
+  // Count totals for the subtitle
+  const roundsDone = Array.from({length:15},(_,r)=>isRoundComplete(r)?1:0).reduce((a,b)=>a+b,0);
+  document.getElementById('fixtures-subtitle').textContent =
+    `${roundsDone} of 15 rounds complete — each pair should face each other once and partner once`;
+
+  const abbr = (name) => {
+    const words = name.split(' ');
+    if(words.length === 1) return name.substring(0,6);
+    return words.map(w=>w[0]||'').join('').substring(0,4).toUpperCase();
+  };
+
+  const buildMatrix = (data, mode) => {
+    let html = '<table class="matrix-table"><thead><tr>';
+    // Corner cell
+    html += `<th class="matrix-corner"></th>`;
+    // Column headers
+    for(let j=0;j<16;j++){
+      const ghost = ghosts[j];
+      html += `<th class="matrix-col-header"><div title="${players[j]}">${ghost?'👻':abbr(players[j])}<br><span style="font-size:0.6rem;opacity:0.5">${j+1}</span></div></th>`;
+    }
+    html += '</tr></thead><tbody>';
+
+    for(let i=0;i<16;i++){
+      const ghostI = ghosts[i];
+      html += '<tr>';
+      // Row header
+      html += `<td class="matrix-row-header"><span>${i+1}</span>${ghostI?'👻 ':''}${players[i]}</td>`;
+      for(let j=0;j<16;j++){
+        if(i===j){
+          html += `<td class="matrix-cell mc-self" title="${players[i]}">—</td>`;
+        } else {
+          const count = data[i][j];
+          let cls, display;
+          if(ghostI || ghosts[j]){
+            cls = 'mc-self'; display = '—';
+          } else if(count===0){
+            cls = mode==='vs'?'mc-none-vs':'mc-none-w';
+            display = '·';
+          } else if(count===1){
+            cls = mode==='vs'?'mc-once-vs':'mc-once-w';
+            display = '✓';
+          } else {
+            cls = mode==='vs'?'mc-multi-vs':'mc-multi-w';
+            display = count;
+          }
+          const title = ghostI||ghosts[j] ? '' :
+            count===0 ? `${players[i]} has not yet played ${mode==='vs'?'against':'with'} ${players[j]}` :
+            `${players[i]} has played ${mode==='vs'?'against':'with'} ${players[j]} ${count} time${count>1?'s':''}`;
+          html += `<td class="matrix-cell ${cls}" title="${title}">${display}</td>`;
+        }
+      }
+      html += '</tr>';
+    }
+    html += '</tbody></table>';
+    return html;
+  };
+
+  document.getElementById('matrix-vs').innerHTML = buildMatrix(vs, 'vs');
+  document.getElementById('matrix-with').innerHTML = buildMatrix(with_, 'with');
+}
+
+function fillDummyScores() {
+  if(!tournamentGenerated){
+    const a = document.getElementById('setup-alert');
+    a.textContent = 'Generate the tournament first before filling dummy scores.';
+    a.style.display = 'block';
+    setTimeout(()=>a.style.display='none', 3000);
+    return;
+  }
+  const max = numQuestions * pointsPerQuestion;
+  const numRounds = 15;
+  const numCourts = 4;
+  for(let r=0;r<numRounds;r++){
+    for(let c=0;c<numCourts;c++){
+      const m=schedule[r][c];
+      const rnd=()=>Math.floor(Math.random()*(max+1));
+      const sc = {
+        a1: ghosts[m.teamA[0]] ? 0 : rnd(),
+        a2: ghosts[m.teamA[1]] ? 0 : rnd(),
+        b1: ghosts[m.teamB[0]] ? 0 : rnd(),
+        b2: ghosts[m.teamB[1]] ? 0 : rnd(),
+      };
+      // Add extra player dummy scores if configured
+      if(extraForBase(m.teamA[0])!==null) sc.ea1 = rnd();
+      if(extraForBase(m.teamA[1])!==null) sc.ea2 = rnd();
+      if(extraForBase(m.teamB[0])!==null) sc.eb1 = rnd();
+      if(extraForBase(m.teamB[1])!==null) sc.eb2 = rnd();
+      scores[r][c] = sc;
+    }
+  }
+  saveState();
+  updateLeaderboard();
+  if(document.getElementById('page-play').classList.contains('active')) renderPlayPage();
+  if(document.getElementById('page-scoresheet').classList.contains('active')) renderScoreSheet();
+  const activeExtras = extras.filter(e=>e&&e.name&&e.baseIndex!==null).length;
+  const a = document.getElementById('setup-alert');
+  a.textContent = `✓ Dummy scores filled for all ${numRounds} rounds${activeExtras>0?` (including ${activeExtras} extra player${activeExtras>1?'s':''})`:''}. `;
+  a.style.display = 'block';
+  setTimeout(()=>a.style.display='none', 3500);
+}
+
+// ===================== PERSIST =====================
+function saveState(){
+  try {
+    localStorage.setItem('rr_players', JSON.stringify(players));
+    localStorage.setItem('rr_ghosts', JSON.stringify(ghosts));
+    localStorage.setItem('rr_dropouts', JSON.stringify(dropouts));
+    localStorage.setItem('rr_extras', JSON.stringify(extras));
+    localStorage.setItem('rr_schedule', JSON.stringify(schedule));
+    localStorage.setItem('rr_scores', JSON.stringify(scores));
+    localStorage.setItem('rr_round', currentRound);
+    localStorage.setItem('rr_generated', tournamentGenerated?'1':'0');
+    localStorage.setItem('rr_questions', numQuestions);
+    localStorage.setItem('rr_ppq', pointsPerQuestion);
+    if(numQuestionsOverride != null) localStorage.setItem('rr_override', numQuestionsOverride);
+    else localStorage.removeItem('rr_override');
+  } catch(e){}
+}
+function loadState(){
+  try {
+    const p=localStorage.getItem('rr_players');
+    if(p){
+      const saved=JSON.parse(p);
+      if(saved.some(n=>n)) players=saved;
+    }
+    const gh=localStorage.getItem('rr_ghosts'); if(gh){ghosts=JSON.parse(gh);}
+    if(p||gh) buildPlayerInputs();
+    const do_=localStorage.getItem('rr_dropouts');
+    if(do_){
+      const saved=JSON.parse(do_);
+      // Support up to 20 slots (16 base + 4 extras)
+      dropouts=Array.from({length:20},(_,i)=>Array.from({length:15},(_,r)=>!!(saved[i]&&saved[i][r])));
+    }
+    const ex_=localStorage.getItem('rr_extras');
+    if(ex_){
+      extras=JSON.parse(ex_);
+      // If extras are active, clear any ghost (mutually exclusive)
+      const hasExtras = extras.some(e => e !== null && e.baseIndex !== null);
+      if(hasExtras){ const gi=ghosts.findIndex(g=>g); if(gi!==-1){ghosts[gi]=false;players[gi]='';} }
+      buildExtraPlayerInputs();
+      rebuildDropoutsForExtras();
+    }
+    const s=localStorage.getItem('rr_schedule'); if(s) schedule=JSON.parse(s);
+    const sc=localStorage.getItem('rr_scores'); if(sc) scores=JSON.parse(sc);
+    const r=localStorage.getItem('rr_round'); if(r) currentRound=parseInt(r)||0;
+    const g=localStorage.getItem('rr_generated'); if(g) tournamentGenerated=(g==='1');
+    const q=localStorage.getItem('rr_questions'); if(q){ numQuestions=parseInt(q)||10; document.getElementById('num-questions').value=numQuestions; }
+    const ppq=localStorage.getItem('rr_ppq'); if(ppq){ pointsPerQuestion=parseInt(ppq)||1; document.getElementById('num-ppq').value=pointsPerQuestion; }
+    const ov=localStorage.getItem('rr_override'); if(ov){ numQuestionsOverride=parseInt(ov)||null; if(numQuestionsOverride) document.getElementById('num-questions-override').value=numQuestionsOverride; }
+  } catch(e){}
+}
+function resetAll(){
+  if(!confirm('Reset the entire tournament? All scores, drop outs and extra players will be cleared.')) return;
+  players=['RumHam','667','LemonHeads','QuiztianoKnowitAll','Jencanto',
+           "Em's a Power Ranger","I Don't Know Any Stevie Wonder",'Smarty Pints',
+           'The Walkers','Suzie Q','Boom Not Cheating Mum',
+           "It's a Trivial Travesty",'Lemurs In Lincolnshire',
+           'The Buckshaw Beast','Titanic Swim Team','KitKat'];
+  ghosts=Array(16).fill(false);
+  dropouts=Array.from({length:20},()=>Array(15).fill(false));
+  extras=[null,null,null,null];
+  schedule=[]; scores={}; currentRound=0; tournamentGenerated=false; numQuestions=10; pointsPerQuestion=1;
+  try{ ['rr_players','rr_ghosts','rr_dropouts','rr_extras','rr_schedule','rr_scores','rr_round','rr_generated','rr_questions','rr_ppq','rr_override'].forEach(k=>localStorage.removeItem(k)); }catch(e){}
+  buildPlayerInputs();
+  buildExtraPlayerInputs();
+  document.getElementById('num-questions').value=10;
+  document.getElementById('num-ppq').value=1;
+  numQuestionsOverride=null;
+  document.getElementById('num-questions-override').value='';
+  updateQuestionInfo();
+  document.getElementById('play-content').innerHTML='';
+  document.getElementById('round-bar').innerHTML='';
+  updateLeaderboard();
+}
+
+// ===================== START =====================
+init();
+</script>
+
+<!-- ===== SCORING EXPLAINER MODAL ===== -->
+<div id="scoring-explainer-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:300;align-items:center;justify-content:center;padding:1rem;overflow-y:auto" onclick="if(event.target===this)closeScoringExplainer()">
+  <div id="scoring-explainer-modal" style="background:var(--slate);border:1px solid var(--border);border-radius:16px;max-width:860px;width:100%;position:relative;max-height:90vh;overflow-y:auto">
+    <button onclick="closeScoringExplainer()" style="position:sticky;top:1rem;right:1rem;float:right;background:rgba(255,255,255,0.1);border:none;color:var(--text);font-size:1.2rem;width:2rem;height:2rem;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;margin:1rem 1rem 0 0;z-index:1">✕</button>
+    <div id="scoring-explainer-content" style="padding:2rem;clear:both"></div>
+  </div>
+</div>
+
+<script>
+function closeScoringExplainer() {
+  document.getElementById('scoring-explainer-overlay').style.display='none';
+}
+
+function showScoringExplainer() {
+  const {max:pot, base} = effectivePot();
+  const q = numQuestions;
+  const ppq = pointsPerQuestion;
+  const indivMax = q * ppq;
+  const teamMax = indivMax * 2;
+  const overrideActive = numQuestionsOverride != null;
+
+  // Helper: render a single scenario card
+  const scenario = (title, subtitle, teamA, teamB, note) => {
+    const sA = teamA.total, sB = teamB.total;
+    const forcedDraw = teamA.forced || teamB.forced;
+    let tpA, tpB, resultLabel, resultColour;
+    if(forcedDraw) {
+      tpA = tpB = base;
+      resultLabel = 'Forced Draw'; resultColour = 'var(--accent)';
+    } else {
+      tpA = Math.min(Math.max(base + (sA - sB), 0), pot);
+      tpB = pot - tpA;
+      if(sA > sB){ resultLabel='Team A Wins'; resultColour='var(--win)'; }
+      else if(sB > sA){ resultLabel='Team B Wins'; resultColour='var(--win)'; }
+      else { resultLabel='Draw'; resultColour='var(--accent)'; }
+    }
+
+    const diff = forcedDraw ? '—' : (sA - sB > 0 ? `+${sA-sB}` : sA === sB ? '0' : `${sA-sB}`);
+    const playerRow = (name, score, isGhost, isOut) => {
+      const badge = isGhost
+        ? `<span style="background:rgba(138,135,176,0.15);border:1px dashed rgba(138,135,176,0.4);border-radius:6px;padding:0.2rem 0.5rem;color:var(--muted);font-size:0.8rem">👻 0</span>`
+        : isOut
+        ? `<span style="background:rgba(192,57,43,0.12);border:1px dashed rgba(192,57,43,0.4);border-radius:6px;padding:0.2rem 0.5rem;color:var(--lose);font-size:0.8rem">OUT — 0</span>`
+        : `<span style="font-family:'Bebas Neue',cursive;font-size:1.1rem;color:var(--accent)">${score}</span>`;
+      return `<div style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.05);border-radius:6px;padding:0.4rem 0.75rem;margin-bottom:0.3rem">
+        <span style="font-weight:600;font-size:0.9rem">${name}</span>${badge}</div>`;
+    };
+
+    const teamBlock = (team, tp, isWin, showX2) => `
+      <div style="flex:1;min-width:0">
+        <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:0.4rem;font-weight:600">${team.label}</div>
+        ${team.players.map(p => playerRow(p.name, p.score, p.ghost, p.out)).join('')}
+        <div style="display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding-top:0.4rem;margin-top:0.3rem">
+          <span style="font-size:0.7rem;text-transform:uppercase;color:var(--muted)">Total${showX2?' ×2':''}</span>
+          <span style="font-family:'Bebas Neue',cursive;font-size:1rem;color:${isWin&&!forcedDraw?'var(--win)':!isWin&&sA!==sB&&!forcedDraw?'var(--lose)':'var(--text)'}">${forcedDraw?'—':team.total}</span>
+        </div>
+        <div style="font-family:'Bebas Neue',cursive;font-size:1.6rem;color:${forcedDraw?'var(--accent)':isWin?'var(--win)':sA===sB?'var(--accent)':'var(--lose)'};text-align:right;line-height:1.1;margin-top:0.2rem">${tp} <span style="font-size:0.7rem">PTS</span></div>
+      </div>`;
+
+    const showX2A = teamA.players.some(p=>p.ghost||p.out) && !teamA.players.every(p=>p.ghost||p.out);
+    const showX2B = teamB.players.some(p=>p.ghost||p.out) && !teamB.players.every(p=>p.ghost||p.out);
+
+    return `
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1.5rem">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:0.2rem">
+        <h3 style="font-family:'Bebas Neue',cursive;font-size:1.2rem;color:var(--accent);letter-spacing:0.05em;margin:0">${title}</h3>
+        <span style="font-family:'Bebas Neue',cursive;font-size:1rem;color:${resultColour};letter-spacing:0.05em">${resultLabel}</span>
+      </div>
+      ${subtitle?`<p style="color:var(--muted);font-size:0.8rem;margin-bottom:0.75rem">${subtitle}</p>`:''}
+      <div style="display:flex;align-items:flex-start;gap:1rem;flex-wrap:wrap">
+        ${teamBlock(teamA, tpA, sA>sB, showX2A)}
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 0.25rem;align-self:center;gap:0.2rem">
+          <span style="font-family:'Bebas Neue',cursive;color:var(--muted);font-size:1rem">VS</span>
+          ${!forcedDraw?`<span style="font-size:0.75rem;color:var(--muted)">diff: ${diff}</span>`:''}
+        </div>
+        ${teamBlock(teamB, tpB, sB>sA, showX2B)}
+      </div>
+      ${note?`<div style="margin-top:0.75rem;padding:0.5rem 0.75rem;background:rgba(0,212,255,0.06);border-left:3px solid var(--accent);border-radius:4px;font-size:0.8rem;color:var(--muted)">${note}</div>`:''}
+    </div>`;
+  };
+
+  // Build team helpers
+  const mkP = (name, score, ghost=false, out=false) => ({name, score: ghost||out ? 0 : score, ghost, out});
+  const mkTeam = (label, p1, p2, forced=false) => {
+    const ab1 = p1.ghost||p1.out, ab2 = p2.ghost||p2.out;
+    const s1 = ab1 ? 0 : p1.score, s2 = ab2 ? 0 : p2.score;
+    let total;
+    if(ab1 && ab2) total = 0;
+    else if(ab1) total = s2 * 2;
+    else if(ab2) total = s1 * 2;
+    else total = s1 + s2;
+    return {label, players:[p1,p2], total, forced};
+  };
+
+  // Pick realistic scores based on indivMax
+  const hi = indivMax, mid = Math.round(indivMax * 0.7), lo = Math.round(indivMax * 0.3), half = Math.round(indivMax * 0.5);
+
+  // Scenario 1: Clear win
+  const s1a = mkTeam('Team A', mkP('Player A1', hi), mkP('Player A2', mid));
+  const s1b = mkTeam('Team B', mkP('Player B1', lo), mkP('Player B2', lo));
+
+  // Scenario 2: Close win
+  const s2Close = Math.ceil(indivMax * 0.55);
+  const s2a = mkTeam('Team A', mkP('Player A1', s2Close), mkP('Player A2', half));
+  const s2b = mkTeam('Team B', mkP('Player B1', half), mkP('Player B2', half-1));
+
+  // Scenario 3: Draw
+  const s3a = mkTeam('Team A', mkP('Player A1', half), mkP('Player A2', half));
+  const s3b = mkTeam('Team B', mkP('Player B1', half), mkP('Player B2', half));
+
+  // Scenario 4: Maximum margin (Team A max, Team B zero) — clamping
+  const s4a = mkTeam('Team A', mkP('Player A1', hi), mkP('Player A2', hi));
+  const s4b = mkTeam('Team B', mkP('Player B1', 0), mkP('Player B2', 0));
+
+  // Scenario 5: Ghost partner
+  const s5a = mkTeam('Team A', mkP('Player A1', mid), mkP('👻 Ghost', 0, true));
+  const s5b = mkTeam('Team B', mkP('Player B1', half), mkP('Player B2', lo));
+
+  // Scenario 6: Drop out (one player absent)
+  const s6a = mkTeam('Team A', mkP('Player A1', mid), mkP('Player A2 (out)', 0, false, true));
+  const s6a2 = mkTeam('Team A', mkP('Player A1', mid), mkP('Player A2', 0, false, true));
+  s6a2.players[1].out = true;
+  const s6b = mkTeam('Team B', mkP('Player B1', half), mkP('Player B2', half));
+  // Recalculate with correct ×2 logic
+  const s6aFixed = mkTeam('Team A', mkP('Player A1', mid), mkP('Player A2', 0, false, true));
+  s6aFixed.players[1].out=true;
+  s6aFixed.total = mid * 2;
+
+  // Scenario 7: Forced draw — ghost + dropout on same team
+  const s7a = mkTeam('Team A', mkP('👻 Ghost', 0, true), mkP('Player A2 (out)', 0, false, true));
+  s7a.forced=true; s7a.total=0;
+  const s7b = mkTeam('Team B', mkP('Player B1', half), mkP('Player B2', mid));
+
+  // Calc formula note
+  const formulaNote = overrideActive
+    ? `<strong style="color:var(--accent)">Override active</strong> — Pot = ${pot}, Base = ${base}. Formula: winner gets <strong>${base} + difference</strong>, loser gets <strong>${pot} − winner's pts</strong>.`
+    : `<strong>Q=${q}</strong>, <strong>PPQ=${ppq}</strong> → Individual max = ${indivMax} &nbsp;·&nbsp; Team max = ${teamMax} &nbsp;·&nbsp; Pot = ${pot} &nbsp;·&nbsp; Base = ${base}<br>
+       Formula: winner gets <strong>${base} + difference</strong>, loser gets <strong>${pot} − winner's pts</strong>, draw = both get <strong>${base}</strong>.`;
+
+  const html = `
+    <div style="font-family:'Bebas Neue',cursive;font-size:2rem;color:var(--accent);letter-spacing:0.08em;margin-bottom:0.25rem">Scores Explained</div>
+    <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1.5rem">Based on your current settings. All scenarios use dummy player names.</p>
+
+    <div style="background:rgba(0,212,255,0.07);border:1px solid rgba(0,212,255,0.25);border-radius:10px;padding:1rem 1.25rem;margin-bottom:2rem;font-size:0.85rem;line-height:1.8;color:var(--text)">
+      ${formulaNote}
+    </div>
+
+    <h2 style="font-family:'Bebas Neue',cursive;font-size:1.4rem;color:var(--text);letter-spacing:0.06em;margin-bottom:1rem;border-bottom:1px solid var(--border);padding-bottom:0.4rem">Standard Results</h2>
+
+    ${scenario(
+      'Clear Win',
+      `Team A dominate — ${hi} + ${mid} = ${hi+mid} vs ${lo} + ${lo} = ${lo*2}. Difference of ${hi+mid-lo*2}.`,
+      mkTeam('Team A', mkP('Player A1', hi), mkP('Player A2', mid)),
+      mkTeam('Team B', mkP('Player B1', lo), mkP('Player B2', lo)),
+      `Winner's pts = ${base} + ${hi+mid-lo*2} = ${Math.min(base+(hi+mid-lo*2),pot)} &nbsp;·&nbsp; Loser's pts = ${pot} − ${Math.min(base+(hi+mid-lo*2),pot)} = ${pot-Math.min(base+(hi+mid-lo*2),pot)} &nbsp;·&nbsp; Total distributed = ${pot} ✓`
+    )}
+
+    ${scenario(
+      'Close Win',
+      `A narrow victory — every point counts.`,
+      mkTeam('Team A', mkP('Player A1', s2Close), mkP('Player A2', half)),
+      mkTeam('Team B', mkP('Player B1', half), mkP('Player B2', half-1)),
+      `Difference = ${s2Close+half-(half+half-1)} &nbsp;·&nbsp; Winner gets ${base} + ${s2Close+half-(half+half-1)} = ${Math.min(base+(s2Close+half-(half+half-1)),pot)} pts &nbsp;·&nbsp; Loser gets ${pot-Math.min(base+(s2Close+half-(half+half-1)),pot)} pts`
+    )}
+
+    ${scenario(
+      'Draw',
+      `Both teams score identically — each receives the base points.`,
+      mkTeam('Team A', mkP('Player A1', half), mkP('Player A2', half)),
+      mkTeam('Team B', mkP('Player B1', half), mkP('Player B2', half)),
+      `Draw: both teams receive <strong>${base} pts</strong> each. Total distributed = ${pot} ✓`
+    )}
+
+    ${scenario(
+      'Maximum Margin — Score Clamping',
+      `Team A answer everything, Team B score zero. Without clamping, Team B would go negative — so the result is clamped.`,
+      mkTeam('Team A', mkP('Player A1', hi), mkP('Player A2', hi)),
+      mkTeam('Team B', mkP('Player B1', 0), mkP('Player B2', 0)),
+      `Raw winner pts = ${base} + ${hi*2} = ${base+hi*2} — but pot is ${pot}, so clamped to <strong>${pot} pts</strong>. Loser gets <strong>0 pts</strong>. Total distributed = ${pot} ✓`
+    )}
+
+    <h2 style="font-family:'Bebas Neue',cursive;font-size:1.4rem;color:var(--text);letter-spacing:0.06em;margin-bottom:1rem;border-bottom:1px solid var(--border);padding-bottom:0.4rem;margin-top:2rem">Absent Players</h2>
+
+    ${scenario(
+      'Ghost Partner',
+      `Player A1's partner slot is permanently set to Ghost (👻). The Ghost always scores 0 — Player A1's score is doubled to form the team total.`,
+      mkTeam('Team A', mkP('Player A1', mid), mkP('👻 Ghost', 0, true)),
+      mkTeam('Team B', mkP('Player B1', half), mkP('Player B2', lo)),
+      `Player A1 scored ${mid}. Ghost scores 0. Team A total = ${mid} × 2 = ${mid*2}. Normal scoring then applies.`
+    )}
+
+    ${scenario(
+      'Drop Out — One Player Absent',
+      `Player A2 has dropped out for this round. Treated identically to a Ghost for this round only — their partner's score is doubled.`,
+      (() => { const t=mkTeam('Team A', mkP('Player A1', mid), mkP('Player A2', 0, false, true)); t.total=mid*2; return t; })(),
+      mkTeam('Team B', mkP('Player B1', half), mkP('Player B2', lo)),
+      `Player A1 scored ${mid}. Player A2 is OUT. Team A total = ${mid} × 2 = ${mid*2}. Player A2 gets N/P for this round — no pts, no W/L/D counted.`
+    )}
+
+    ${scenario(
+      'Drop Out — Both Players Absent',
+      `Both players on Team A have dropped out. The slot is fully absent — Team B receives full pot.`,
+      (() => { const t=mkTeam('Team A', mkP('Player A1', 0, false, true), mkP('Player A2', 0, false, true)); t.total=0; t.forced=true; return t; })(),
+      mkTeam('Team B', mkP('Player B1', half), mkP('Player B2', lo)),
+      `Both Team A players are OUT → Forced Draw. Both teams receive base points (${base} each), regardless of Team B's score.`
+    )}
+
+    <h2 style="font-family:'Bebas Neue',cursive;font-size:1.4rem;color:var(--text);letter-spacing:0.06em;margin-bottom:1rem;border-bottom:1px solid var(--border);padding-bottom:0.4rem;margin-top:2rem">Forced Draw</h2>
+
+    ${scenario(
+      'Ghost + Drop Out on Same Team',
+      `One slot is the Ghost (👻). Their partner (Player A2) drops out this round. The team has no real players — Forced Draw.`,
+      (() => { const t=mkTeam('Team A', mkP('👻 Ghost', 0, true), mkP('Player A2', 0, false, true)); t.total=0; t.forced=true; return t; })(),
+      mkTeam('Team B', mkP('Player B1', hi), mkP('Player B2', mid)),
+      `Ghost is always absent. Player A2 dropped out. Team A has nobody → Forced Draw. Both teams get <strong>${base} pts</strong> regardless of scores.`
+    )}
+
+    ${overrideActive ? `
+    <h2 style="font-family:'Bebas Neue',cursive;font-size:1.4rem;color:var(--text);letter-spacing:0.06em;margin-bottom:1rem;border-bottom:1px solid var(--border);padding-bottom:0.4rem;margin-top:2rem">Max Score Override Active</h2>
+    <div style="background:rgba(0,212,255,0.07);border:1px solid rgba(0,212,255,0.25);border-radius:10px;padding:1rem 1.25rem;margin-bottom:1.5rem;font-size:0.85rem;color:var(--text)">
+      Override is set to <strong style="color:var(--accent)">${numQuestionsOverride}</strong>. This replaces the Q × PPQ × 4 formula entirely.<br>
+      Pot = <strong>${pot}</strong> &nbsp;·&nbsp; Base = <strong>${base}</strong> &nbsp;·&nbsp; Individual score inputs still accept 0–${indivMax}.<br>
+      All scenarios above use these override values.
+    </div>` : ''}
+
+    <div style="text-align:center;margin-top:1.5rem">
+      <button class="btn btn-primary" onclick="closeScoringExplainer()">Got it!</button>
+    </div>`;
+
+  document.getElementById('scoring-explainer-content').innerHTML = html;
+  const overlay = document.getElementById('scoring-explainer-overlay');
+  overlay.style.display = 'flex';
+  overlay.scrollTop = 0;
+}
+</script>
+</body>
+</html>
