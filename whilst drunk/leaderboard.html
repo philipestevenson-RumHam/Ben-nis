@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Americano — Live Leaderboard</title>
+<title>Ben-nis Double — Live Leaderboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -138,7 +138,7 @@ body::before{
 .table-wrap::-webkit-scrollbar-track{background:transparent}
 .table-wrap::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px}
 
-table{width:100%;border-collapse:collapse;font-size:0.9rem;table-layout:fixed}
+table{width:100%;border-collapse:collapse;font-size:0.9rem}
 thead th{
   background:rgba(28,15,58,0.95);
   color:var(--muted);
@@ -151,21 +151,14 @@ thead th{
   top:0;
   z-index:1;
   border-bottom:1px solid var(--border);
-  text-align:center;
-  overflow:hidden;
-  white-space:nowrap;
 }
-thead th:nth-child(2){text-align:left}
 thead th:not(:first-child):not(:nth-child(2)){text-align:center}
 tbody td{
   padding:0.45rem 0.6rem;
   border-bottom:1px solid var(--border);
   vertical-align:middle;
-  text-align:center;
-  overflow:hidden;
-  white-space:nowrap;
 }
-tbody td:nth-child(2){text-align:left;white-space:normal}
+tbody td:not(:first-child):not(:nth-child(2)){text-align:center}
 tbody tr{transition:background 0.1s}
 tbody tr:hover td{background:rgba(255,255,255,0.03)}
 
@@ -186,8 +179,6 @@ tbody tr:hover td{background:rgba(255,255,255,0.03)}
 .lose{color:var(--lose)}
 .pts{font-family:'Bebas Neue',cursive;font-size:1.05rem;color:var(--accent)}
 .player-name{font-weight:600;font-size:0.9rem}
-.player-cell{display:flex;align-items:center;gap:0.5rem}
-.player-thumb{width:28px;height:28px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,0.15);flex-shrink:0}
 
 /* ── STATUS BAR ── */
 .status{
@@ -236,7 +227,7 @@ tbody tr:hover td{background:rgba(255,255,255,0.03)}
 
 <div class="header">
   <div class="logo-badge">
-    <span class="logo-main">AMERICANO</span>
+    <span class="logo-main">BEN-NIS DOUBLE</span>
     <span class="logo-sub">Smartphone Quiz Knights</span>
   </div>
   <div class="header-meta">
@@ -257,14 +248,14 @@ tbody tr:hover td{background:rgba(255,255,255,0.03)}
       <thead><tr>
         <th style="width:36px">#</th>
         <th>Team</th>
-        <th style="width:42px" title="Sets played">P</th>
-        <th style="width:42px" title="Wins" class="win">W</th>
-        <th style="width:42px" title="Losses" class="lose">L</th>
-        <th style="width:42px" title="Draws">D</th>
-        <th style="width:48px" title="Not played (dropped out)">N/P</th>
-        <th style="width:60px" title="Tournament points">T.Pts</th>
-        <th style="width:60px" title="Score differential">+/&minus;</th>
-        <th style="width:60px" title="Total raw individual scores (tiebreaker)">Indiv</th>
+        <th title="Sets played">P</th>
+        <th title="Wins" class="win">W</th>
+        <th title="Losses" class="lose">L</th>
+        <th title="Draws">D</th>
+        <th title="Not played (dropped out)">N/P</th>
+        <th title="Tournament points">T.Pts</th>
+        <th title="Score differential">+/&minus;</th>
+        <th title="Total raw individual scores (tiebreaker)">Indiv</th>
       </tr></thead>
       <tbody id="lb1-body"><tr><td colspan="10" style="text-align:center;color:var(--muted);padding:2rem">Waiting for tournament data…</td></tr></tbody>
     </table>
@@ -277,13 +268,13 @@ tbody tr:hover td{background:rgba(255,255,255,0.03)}
       <thead><tr>
         <th style="width:36px">#</th>
         <th>Team</th>
-        <th style="width:42px" title="Sets played">P</th>
-        <th style="width:42px" title="Wins" class="win">W</th>
-        <th style="width:42px" title="Losses" class="lose">L</th>
-        <th style="width:48px" title="Not played (dropped out)">N/P</th>
-        <th style="width:60px" title="Individual score">Score</th>
-        <th style="width:60px" title="Max possible">Max</th>
-        <th style="width:52px" title="Percentage">%</th>
+        <th title="Sets played">P</th>
+        <th title="Wins" class="win">W</th>
+        <th title="Losses" class="lose">L</th>
+        <th title="Not played (dropped out)">N/P</th>
+        <th title="Individual score">Score</th>
+        <th title="Max possible">Max</th>
+        <th title="Percentage">%</th>
       </tr></thead>
       <tbody id="lb2-body"><tr><td colspan="9" style="text-align:center;color:var(--muted);padding:2rem">Waiting for tournament data…</td></tr></tbody>
     </table>
@@ -296,13 +287,13 @@ tbody tr:hover td{background:rgba(255,255,255,0.03)}
       <thead><tr>
         <th style="width:36px">#</th>
         <th>Team</th>
-        <th style="width:42px" title="Sets played">P</th>
-        <th style="width:42px" title="Wins" class="win">W</th>
-        <th style="width:42px" title="Losses" class="lose">L</th>
-        <th style="width:42px" title="Draws">D</th>
-        <th style="width:48px" title="Not played (dropped out)">N/P</th>
-        <th style="width:76px" title="Team points: combined score of both teams on your court each set">Team Pts</th>
-        <th style="width:60px" title="Individual score (tiebreaker)">Indiv</th>
+        <th title="Sets played">P</th>
+        <th title="Wins" class="win">W</th>
+        <th title="Losses" class="lose">L</th>
+        <th title="Draws">D</th>
+        <th title="Not played (dropped out)">N/P</th>
+        <th title="Team points: combined score of both teams on your court each set">Team Pts</th>
+        <th title="Individual score (tiebreaker)">Indiv</th>
       </tr></thead>
       <tbody id="lb3-body"><tr><td colspan="9" style="text-align:center;color:var(--muted);padding:2rem">Waiting for tournament data…</td></tr></tbody>
     </table>
@@ -311,13 +302,13 @@ tbody tr:hover td{background:rgba(255,255,255,0.03)}
 
 <div class="not-ready" id="not-ready" style="display:none">
   <h2>No Tournament Found</h2>
-  <p>Open the main Americano app and generate a tournament first.</p>
+  <p>Open the main Ben-nis Double app and generate a tournament first.</p>
   <p style="font-size:0.75rem;opacity:0.6">This page must be opened from the same browser as the main app.</p>
 </div>
 
 <div class="status">
   <span><span class="status-dot" id="status-dot"></span><span class="status-text" id="status-text">Connecting…</span></span>
-  <span class="status-text">Updates every 3s &nbsp;·&nbsp; Americano Live</span>
+  <span class="status-text">Updates every 3s &nbsp;·&nbsp; Ben-nis Double Live</span>
 </div>
 
 <script>
@@ -382,16 +373,6 @@ function loadAndRender(){
     const rawGen     = localStorage.getItem('rr_generated');
     const rawQ       = localStorage.getItem('rr_questions');
 
-    // Load player images keyed by name
-    let playerImages = {};
-    try { playerImages = JSON.parse(localStorage.getItem('rr_player_images') || '{}'); } catch(e) {}
-
-    function playerNameCell(name) {
-      const src = playerImages[name] || Object.entries(playerImages).find(([k])=>k.toLowerCase()===name.toLowerCase())?.[1];
-      const img = src ? `<img class="player-thumb" src="${src}" alt="">` : '';
-      return `<div class="player-cell">${img}<span class="player-name">${name}</span></div>`;
-    }
-
     if(!rawGen || rawGen!=='1' || !rawPlayers || !rawSched || !rawScores){
       setStatus(false,'No tournament data');
       document.getElementById('not-ready').style.display='flex';
@@ -406,7 +387,7 @@ function loadAndRender(){
     document.getElementById('tabs-bar').style.display='flex';
     if(!document.querySelector('.panel.active')) document.getElementById('p1').classList.add('active');
 
-    const players  = JSON.parse(rawPlayers).slice(0,16);
+    const players  = JSON.parse(rawPlayers);
     const ghosts   = rawGhosts ? JSON.parse(rawGhosts) : Array(16).fill(false);
     const rawDropouts = localStorage.getItem('rr_dropouts');
     const dropouts = rawDropouts
@@ -428,9 +409,9 @@ function loadAndRender(){
     function isAbsentLB(pi,r){ return ghosts[pi]||(dropouts[pi]&&dropouts[pi][r]); } // kept for safety
 
     const stats={};
-    players.forEach((p,i)=>{ if(!ghosts[i] && p && p.trim()) stats[i]={name:p,played:0,wins:0,losses:0,draws:0,notPlayed:0,tPts:0,teamPts:0,scoreFor:0,scoreAgainst:0,indivScore:0,isExtra:false}; });
+    players.forEach((p,i)=>{ if(!ghosts[i]) stats[i]={name:p,played:0,wins:0,losses:0,draws:0,notPlayed:0,tPts:0,teamPts:0,scoreFor:0,scoreAgainst:0,indivScore:0}; });
     // Add extra players
-    extras.forEach((ex,ei)=>{ if(ex&&ex.name&&ex.baseIndex!==null) stats[16+ei]={name:ex.name,played:0,wins:0,losses:0,draws:0,notPlayed:0,tPts:0,teamPts:0,scoreFor:0,scoreAgainst:0,indivScore:0,isExtra:true}; });
+    extras.forEach((ex,ei)=>{ if(ex&&ex.name&&ex.baseIndex!==null) stats[16+ei]={name:ex.name,played:0,wins:0,losses:0,draws:0,notPlayed:0,tPts:0,teamPts:0,scoreFor:0,scoreAgainst:0,indivScore:0}; });
 
     let roundsDone=0;
     for(let r=0;r<15;r++){
@@ -525,7 +506,7 @@ function loadAndRender(){
       const diff=s.scoreFor-s.scoreAgainst;
       return `<tr>
         <td><span class="rank-badge ${rc}">${i+1}</span></td>
-        <td>${playerNameCell(s.name)}</td>
+        <td class="player-name">${s.name}</td>
         <td>${s.played}</td>
         <td class="win">${s.wins}</td>
         <td class="lose">${s.losses}</td>
@@ -548,7 +529,7 @@ function loadAndRender(){
       const pct=s.played>0?Math.round(s.indivScore/(indivMax*15)*100):0;
       return `<tr>
         <td><span class="rank-badge ${rc}">${i+1}</span></td>
-        <td>${playerNameCell(s.name)}</td>
+        <td class="player-name">${s.name}</td>
         <td>${s.played}</td>
         <td class="win">${s.wins}</td>
         <td class="lose">${s.losses}</td>
@@ -571,7 +552,7 @@ function loadAndRender(){
       const rc=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'rank-n';
       return `<tr>
         <td><span class="rank-badge ${rc}">${i+1}</span></td>
-        <td>${playerNameCell(s.name)}</td>
+        <td class="player-name">${s.name}</td>
         <td>${s.played}</td>
         <td class="win">${s.wins}</td>
         <td class="lose">${s.losses}</td>
