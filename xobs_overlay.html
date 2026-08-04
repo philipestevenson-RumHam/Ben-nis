@@ -23,11 +23,11 @@ body::before{content:'';position:fixed;inset:0;background-image:url('data:image/
 .nav-btn:disabled{opacity:0.2;cursor:default;}
 .round-label{font-family:'Bebas Neue',cursive;font-size:clamp(0.9rem,1.6vw,1.5rem);color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;}
 .grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:1%;flex:1;min-height:0;}
-.card{background:var(--slate);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;min-height:0;min-width:0;}
+.card{background:var(--slate);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;min-height:0;}
 .card-hdr{background:var(--court);padding:1.5% 3%;display:flex;align-items:center;gap:0.5rem;flex-shrink:0;}
 .card-hdr span{font-family:'Bebas Neue',cursive;font-size:clamp(0.9rem,1.8vw,1.6rem);color:white;letter-spacing:0.05em;}
-.card-body{flex:1;display:flex;align-items:stretch;padding:2% 2% 3%;gap:2%;min-height:0;min-width:0;overflow:hidden;}
-.team{flex:1;display:flex;flex-direction:column;gap:3%;position:relative;min-width:0;}
+.card-body{flex:1;display:flex;align-items:stretch;padding:2% 2% 3%;gap:2%;min-height:0;overflow:hidden;}
+.team{flex:1;display:flex;flex-direction:column;gap:3%;position:relative;}
 .team-label{font-family:'Bebas Neue',cursive;font-size:clamp(0.75rem,1.4vw,1.2rem);text-transform:uppercase;letter-spacing:0.12em;color:var(--muted);margin-bottom:4%;}
 .prow{display:flex;align-items:center;justify-content:space-between;gap:2%;background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:6px;padding:3% 4%;}
 .pimg{border-radius:5px;object-fit:cover;flex-shrink:0;width:1.5em;height:1.5em;}
@@ -71,7 +71,7 @@ body::before{content:'';position:fixed;inset:0;background-image:url('data:image/
 </style>
 </head>
 <body>
-<div class="wrap" id="courts-view">
+<div class="wrap">
   <div class="inner">
     <div class="title">AMERICANO COURTS</div>
     <div class="round-bar">
@@ -83,10 +83,6 @@ body::before{content:'';position:fixed;inset:0;background-image:url('data:image/
     </div>
     <div class="grid" id="grid"></div>
   </div>
-</div>
-<div class="wrap" id="leaderboard-view" style="display:none">
-  <iframe id="lb-frame" src="leaderboard.html" title="Live Leaderboard"
-    style="width:100%;height:100%;border:none;background:transparent"></iframe>
 </div>
 <div class="status-bar"><div class="dot"></div><span id="status-txt">Connecting…</span></div>
 
@@ -278,7 +274,7 @@ function renderGrid(r, data, singleCourt=null){
 
 function navRound(delta){
   obsRound=Math.max(0,Math.min(14,obsRound+delta));
-  localStorage.setItem('rr_round',obsRound); // shared with the main app — keeps Play/Score Sheet in sync too
+  localStorage.setItem('rr_obs_round',obsRound);
   if(lastData) render();
 }
 
@@ -293,7 +289,6 @@ function render(){
 function startCycle(){
   cycleActive=true;
   cycleCourtIdx=0;
-  localStorage.setItem('rr_obs_cycle','1'); // shared with the main app's Play Cycle button
   document.getElementById('play-btn').textContent='⏹ Stop';
   document.getElementById('grid').classList.add('single');
   const ind=document.getElementById('court-ind');
@@ -311,7 +306,6 @@ function stopCycle(){
   cycleActive=false;
   clearInterval(cycleTimer);
   cycleTimer=null;
-  localStorage.setItem('rr_obs_cycle','0'); // shared with the main app's Play Cycle button
   document.getElementById('play-btn').textContent='▶ Play';
   document.getElementById('grid').classList.remove('single');
   document.getElementById('court-ind').style.display='none';
@@ -346,7 +340,7 @@ function load(){
     const rawScores=localStorage.getItem('rr_scores');
     const rawQ=localStorage.getItem('rr_questions');
     const rawOv=localStorage.getItem('rr_override');
-    const rawOr=localStorage.getItem('rr_round');
+    const rawOr=localStorage.getItem('rr_obs_round');
 
     if(!rawSc){
       document.getElementById('status-txt').textContent='No schedule data';
@@ -356,25 +350,6 @@ function load(){
     if(rawOr!==null){
       const nr=parseInt(rawOr)||0;
       if(nr!==obsRound){ obsRound=nr; }
-    }
-
-    // Leaderboard mode: driven by the "Show Leaderboard" toggle on the
-    // Score Sheet / Play tabs in the main app. Swap the whole view instead
-    // of touching the courts grid so the courts logic below can just be
-    // skipped entirely while the leaderboard is showing.
-    const lbMode = localStorage.getItem('rr_obs_leaderboard')==='1';
-    document.getElementById('courts-view').style.display = lbMode ? 'none' : '';
-    document.getElementById('leaderboard-view').style.display = lbMode ? '' : 'none';
-    if(lbMode){
-      document.getElementById('status-txt').textContent='Live · Leaderboard · '+new Date().toLocaleTimeString();
-      return;
-    }
-
-    // Pick up the ▶ Play Cycle / ⏹ Stop Cycle toggle if it was changed from
-    // the Score Sheet or Play tab in the main app.
-    const cycleOn = localStorage.getItem('rr_obs_cycle')==='1';
-    if(cycleOn !== cycleActive){
-      if(cycleOn) startCycle(); else stopCycle();
     }
 
     const parsedDo=rawDo?JSON.parse(rawDo):null;
