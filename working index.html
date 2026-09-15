@@ -843,7 +843,6 @@ h1, h2, h3, .display { font-family: 'Bebas Neue', cursive; letter-spacing: 0.05e
       <p style="color:var(--muted);margin-top:0.25rem" id="ss-subtitle">Enter each player's score for the selected round</p>
     </div>
     <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
-      <button class="btn btn-secondary btn-sm" onclick="ssOpenPaste()">📋 Paste Scores</button>
       <button class="btn btn-secondary btn-sm" onclick="ssExport()">⬇ Export Scores</button>
       <label class="btn btn-secondary btn-sm" style="cursor:pointer;margin:0">⬆ Import Scores<input type="file" accept=".xlsx,.csv" style="display:none" onchange="ssImport(this)"></label>
       <button class="btn btn-secondary btn-sm" onclick="ssClearRound()">Clear Round</button>
@@ -2929,97 +2928,6 @@ function ssKeyNavExtra(event, ei) {
   }
 }
 
-function ssNormalizeName(s) {
-  return (s || '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
-}
-
-function ssBuildPlayerMap() {
-  const numCourts = 4;
-  const round = schedule[ssRound];
-  const map = {};
-  const keys = ['a1', 'a2', 'b1', 'b2'];
-  for (let c = 0; c < numCourts; c++) {
-    const m = round[c];
-    const pis = [m.teamA[0], m.teamA[1], m.teamB[0], m.teamB[1]];
-    pis.forEach((pi, i) => { map[pi] = { court: c, key: keys[i] }; });
-  }
-  return map;
-}
-
-function ssOpenPaste() {
-  if (!tournamentGenerated) { alert('Generate the tournament first.'); return; }
-  document.getElementById('paste-scores-textarea').value = '';
-  document.getElementById('paste-scores-alert').style.display = 'none';
-  document.getElementById('paste-scores-overlay').style.display = 'flex';
-  setTimeout(() => document.getElementById('paste-scores-textarea').focus(), 50);
-}
-
-function ssClosePaste() {
-  document.getElementById('paste-scores-overlay').style.display = 'none';
-}
-
-function ssApplyPaste() {
-  const raw = document.getElementById('paste-scores-textarea').value;
-  const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(l => l.length);
-  const parsed = [];
-  for (const line of lines) {
-    const idx = line.indexOf('¬');
-    if (idx === -1) continue;
-    const name = line.slice(0, idx).trim();
-    const scoreStr = line.slice(idx + 1).trim();
-    const score = parseInt(scoreStr, 10);
-    if (!name || isNaN(score)) continue;
-    parsed.push({ name, score });
-  }
-
-  const alertEl = document.getElementById('paste-scores-alert');
-  if (!parsed.length) {
-    alertEl.textContent = 'No valid lines found. Expect one "Name¬Score" pair per line.';
-    alertEl.style.display = 'block';
-    return;
-  }
-
-  // Build matchable candidates for the current round: active base players + active extras
-  const playerMap = ssBuildPlayerMap();
-  const candidates = [];
-  for (let pi = 0; pi < 16; pi++) {
-    if (ghosts[pi] || dropouts[pi][ssRound]) continue;
-    candidates.push({ norm: ssNormalizeName(players[pi]), apply: (val) => ssSetScore(pi, val) });
-  }
-  extras.forEach((ex, ei) => {
-    if (!ex || !ex.name || ex.baseIndex === null) return;
-    const extraSlotIdx = 16 + ei;
-    if (dropouts[extraSlotIdx] && dropouts[extraSlotIdx][ssRound]) return;
-    const info = playerMap[ex.baseIndex];
-    if (!info) return;
-    candidates.push({ norm: ssNormalizeName(ex.name), apply: (val) => ssSetExtraScore(ei, info.court, info.key, val) });
-  });
-
-  let matched = 0;
-  const unmatched = [];
-  for (const { name, score } of parsed) {
-    const norm = ssNormalizeName(name);
-    const candidate = candidates.find(c => c.norm === norm);
-    if (candidate) {
-      candidate.apply(String(score));
-      matched++;
-    } else {
-      unmatched.push(name);
-    }
-  }
-
-  renderScoreSheet();
-  updateLeaderboard();
-  if (document.getElementById('page-play').classList.contains('active')) renderPlayPage();
-  ssClosePaste();
-
-  const a = document.getElementById('ss-alert');
-  a.textContent = `✓ Paste complete — ${matched} score${matched === 1 ? '' : 's'} updated` +
-    (unmatched.length ? `. No match for: ${unmatched.join(', ')}` : '.');
-  a.style.display = 'block';
-  setTimeout(() => a.style.display = 'none', 6000);
-}
-
 function buildScoresWorkbook() {
   const keys = ['a1','a2','b1','b2'];
   const rows = [];
@@ -3537,23 +3445,6 @@ function resetAll(){
 // ===================== START =====================
 init();
 </script>
-
-<!-- ===== PASTE SCORES MODAL ===== -->
-<div id="paste-scores-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:300;align-items:center;justify-content:center;padding:1rem;overflow-y:auto" onclick="if(event.target===this)ssClosePaste()">
-  <div style="background:var(--slate);border:1px solid var(--border);border-radius:16px;max-width:560px;width:100%;position:relative;max-height:90vh;overflow-y:auto">
-    <button onclick="ssClosePaste()" style="position:sticky;top:1rem;right:1rem;float:right;background:rgba(255,255,255,0.1);border:none;color:var(--text);font-size:1.2rem;width:2rem;height:2rem;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;margin:1rem 1rem 0 0;z-index:1">✕</button>
-    <div style="padding:2rem;clear:both">
-      <h2 style="font-family:'Bebas Neue',cursive;font-size:1.6rem;color:var(--text);letter-spacing:0.06em;margin-bottom:0.5rem">Paste Scores</h2>
-      <p style="font-size:0.85rem;color:var(--muted);line-height:1.5;margin-bottom:1rem">Paste the OCR output — one player/team per line, name and score separated by <code style="background:rgba(255,255,255,0.1);padding:1px 4px;border-radius:3px">¬</code>. Matches are made against names in the current round.</p>
-      <textarea id="paste-scores-textarea" placeholder="RumHam¬1&#10;667¬2&#10;LemonHeads¬3" style="width:100%;min-height:220px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.9rem;padding:0.75rem;resize:vertical"></textarea>
-      <div id="paste-scores-alert" class="alert" style="display:none;margin-top:1rem"></div>
-      <div style="display:flex;gap:0.75rem;margin-top:1.25rem">
-        <button class="btn btn-primary" onclick="ssApplyPaste()">Apply Scores</button>
-        <button class="btn btn-secondary btn-sm" onclick="ssClosePaste()">Cancel</button>
-      </div>
-    </div>
-  </div>
-</div>
 
 <!-- ===== SCORING EXPLAINER MODAL ===== -->
 <div id="scoring-explainer-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:300;align-items:center;justify-content:center;padding:1rem;overflow-y:auto" onclick="if(event.target===this)closeScoringExplainer()">
